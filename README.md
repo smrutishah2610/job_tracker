@@ -169,6 +169,36 @@ Finally, let's get the web app running!
         ```
 
     *   You should now see your Job Tracker application!
+
+---
+
+### Part 3: Features and How to Utilize
+
+This section highlights the key features of the Job Tracker App and guides you on how to use them effectively. Screenshots will be added here to visually explain each feature.
+
+#### 1. Submitting a New Job Application
+
+*   **Description:** This feature allows you to input details for a new job application, including position, company, description, contact, source, application date, status, notes, and an optional resume upload.
+*   **How to Utilize:** Navigate to the home page (`/`) to access the submission form. Fill in the required fields (marked with `*`) and select the appropriate application status. You can also upload your resume in PDF format.
+
+    <!-- Screenshot: Job Submission Form -->
+    ![Job Submission Form Screenshot](path/to/your/submission_form_screenshot.png)
+
+#### 2. Viewing and Managing Job Applications
+
+*   **Description:** This feature displays all your submitted job applications in a table format, allowing you to view, edit, or delete them. It also provides filtering by status and sorting options.
+*   **How to Utilize:** Click on the "View Jobs" button (or navigate to `/view`). You can:
+    *   **Sort:** Use the "Sort by" dropdown to organize applications by Position, Company Name, or Application Date.
+    *   **Filter by Status:** Click on the status buttons (e.g., "Applied", "Interview") to filter the list and see only applications with that status. The numbers next to each status show the count of applications.
+    *   **View Details:** Click "View More" for truncated descriptions.
+    *   **View Resume:** Click "View" in the Resume column to open the uploaded PDF.
+    *   **Edit Application:** Click "Edit" to modify an existing job application.
+    *   **Delete Application:** Click "Delete" to remove a single application.
+    *   **Delete Multiple:** Select multiple jobs using the checkboxes and click "Delete Selected" to remove them in bulk.
+
+    <!-- Screenshot: Job Applications List View -->
+    ![Job Applications List View Screenshot](path/to/your/list_view_screenshot.png)
+
 ---
 
 That's it! You've successfully set up and launched the Job Tracker app. If you encounter any issues, double-check each step, especially the `Connection_String` in `app.py` and the virtual environment activation.
