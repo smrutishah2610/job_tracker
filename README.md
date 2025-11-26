@@ -182,7 +182,7 @@ This section highlights the key features of the Job Tracker App and guides you o
 *   **How to Utilize:** Navigate to the home page (`/`) to access the submission form. Fill in the required fields (marked with `*`) and select the appropriate application status. You can also upload your resume in PDF format.
 
     <!-- Screenshot: Job Submission Form -->
-    ![Job Submission Form Screenshot](path/to/your/submission_form_screenshot.png)
+    ![Job Submission Form Screenshot](/Users/smrutishah/SMRUTI_SHAH/Github_Projects/job_tracker/Job_Tracker_App/home.png)
 
 #### 2. Viewing and Managing Job Applications
 
