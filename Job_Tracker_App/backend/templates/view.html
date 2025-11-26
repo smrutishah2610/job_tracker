@@ -40,6 +40,7 @@
       <table class="table table-striped table-resizable">
         <thead class="table-dark">
           <tr>
+            <th style="width: 50px;">No.</th>
             <th style="width: 150px;">Position</th>
             <th style="width: 200px;">Company Name</th>
             <th style="width: 350px;">Description</th>
@@ -56,12 +57,13 @@
         <tbody>
           {% for job in jobs %}
           <tr>
+            <td>{{ loop.index }}</td>
             <td>{{ job.position }}</td>
             <td>{{ job.company_name }}</td>
             <td>
-              <span class="description-preview">{{ job.description | truncate(100) }}</span>
+              <span class="description-preview">{{ job.description | truncate(100) | replace('\n', '<br>') | safe }}</span>
               {% if job.description | length > 100 %}
-              <a href="#" class="view-more-btn" data-bs-toggle="modal" data-bs-target="#descriptionModal" data-description="{{ job.description }}">View More</a>
+              <a href="#" class="view-more-btn" data-bs-toggle="modal" data-bs-target="#descriptionModal" data-description="{{ job.description | replace('\n', '<br>') | safe }}">View More</a>
               {% endif %}
             </td>
             <td>{{ job.contact }}</td>
@@ -123,11 +125,12 @@
       display: none;
     }
     .description-preview {
-      /* white-space: nowrap; */
-      /* overflow: hidden; */
-      /* text-overflow: ellipsis; */
-      /* display: inline-block; */
-      /* max-width: 150px; /* Adjust as needed */
+      white-space: pre-wrap; /* Preserve whitespace and allow wrapping */
+      word-wrap: break-word;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: inline-block;
+      max-width: 300px; /* Adjust as needed, slightly less than column width */
       vertical-align: middle;
     }
     .view-more-btn {

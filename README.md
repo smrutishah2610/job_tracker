@@ -6,9 +6,9 @@ This guide will help you get the Job Tracker application up and running on your 
 
 Before we start, you'll need to install a few essential tools on your computer. Think of these as the basic ingredients for our project:
 
-1.  **Git (for getting the project files):**
-    *   **What it is:** Git is a tool that helps you download and manage project files from the internet.
-    *   **How to get it:**
+1.  **Git (Optional, for cloning the project):**
+    *   **What it is:** Git is a tool that helps you download and manage project files from the internet. While recommended for version control, you can also download the project as a ZIP file if you prefer.
+    *   **How to get it (if you choose to install Git):**
         *   Open your web browser and go to: [https://git-scm.com/downloads](https://git-scm.com/downloads)
         *   Download the version for your computer (Windows or Mac).
         *   Follow the installation steps. You can usually just click "Next" through most of the options.
@@ -37,8 +37,9 @@ Now that you have the tools, let's get the app running!
     *   **Mac/Linux:** Search for "Terminal" in your applications.
     *   **Windows:** Search for "Command Prompt" or "CMD".
 
-2.  **Download the project:**
-    *   In the Terminal/Command Prompt, type the following command and press Enter:
+2.  **Download the project files:**
+    *   **Option 1: Clone with Git (Recommended if you have Git installed)**
+        In the Terminal/Command Prompt, type the following command and press Enter:
 
         ```bash
         git clone https://github.com/YOUR_USERNAME/job_tracker.git
@@ -46,7 +47,10 @@ Now that you have the tools, let's get the app running!
 
         *(Replace `YOUR_USERNAME` with the actual GitHub username if you have a fork, otherwise you can use the original repo's URL.)*
 
-    *   This will create a folder named `job_tracker` on your computer.
+    *   **Option 2: Download as ZIP**
+        Go to the GitHub repository page (e.g., `https://github.com/YOUR_USERNAME/job_tracker`), click on the green "Code" button, and select "Download ZIP". Extract the contents of the ZIP file to your desired location.
+
+    *   This will create a folder named `job_tracker` on your computer (or extract it to a folder of that name if you downloaded the ZIP).
 
 3.  **Go into the project folder:**
     *   Type this command and press Enter:
