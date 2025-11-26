@@ -1,8 +1,9 @@
-from flask import Flask, render_template, request, redirect, url_for, send_file
+from flask import Flask, render_template, request, redirect, url_for, send_file, jsonify
 from pymongo import MongoClient
 from bson import ObjectId
 import os
 from werkzeug.utils import secure_filename
+from collections import Counter
 
 app = Flask(__name__)
 UPLOAD_FOLDER = "resumes"
@@ -30,21 +31,45 @@ def submit():
 
     job_data = {
         "position": data['position'],
+        "company_name": data['company_name'],
         "description": data['description'],
-        "posting_date": data['posting_date'],
-        "last_date": data['last_date'],
         "contact": data['contact'],
         "source": data['source'],
         "application_date": data['application_date'],
-        "resume_path": filepath
+        "resume_path": filepath,
+        "status": data['status'],
+        "notes": data.get('notes', '') # New optional field
     }
     collection.insert_one(job_data)
     return redirect(url_for("view_jobs"))
 
 @app.route("/view")
 def view_jobs():
-    jobs = list(collection.find())
-    return render_template("view.html", jobs=jobs)
+    sort_by = request.args.get('sort_by', 'application_date')
+    status_filter = request.args.get('status_filter')
+
+    query = {}
+    if status_filter and status_filter != 'All':
+        query['status'] = status_filter
+
+    jobs_cursor = collection.find(query)
+
+    if sort_by == 'position':
+        jobs_cursor = jobs_cursor.sort("position", 1)
+    elif sort_by == 'company_name':
+        jobs_cursor = jobs_cursor.sort("company_name", 1)
+    elif sort_by == 'application_date':
+        jobs_cursor = jobs_cursor.sort("application_date", -1)
+
+    jobs = list(jobs_cursor)
+
+    # Calculate status counts
+    all_statuses = ["Applied", "1st Round Interview", "2nd Round Interview", "Offer Accepted", "Application Declined", "Offer Letter Declined", "Need to Apply"]
+    status_counts = {'All': collection.count_documents({})}
+    for status in all_statuses:
+        status_counts[status] = collection.count_documents({'status': status})
+
+    return render_template("view.html", jobs=jobs, status_counts=status_counts, current_status_filter=status_filter)
 
 @app.route("/resume/<job_id>")
 def view_resume(job_id):
@@ -59,13 +84,14 @@ def edit_job(job_id):
     if request.method == "POST":
         updated_data = {
             "position": request.form['position'],
+            "company_name": request.form['company_name'],
             "description": request.form['description'],
-            "posting_date": request.form['posting_date'],
-            "last_date": request.form['last_date'],
             "contact": request.form['contact'],
             "source": request.form['source'],
             "application_date": request.form['application_date'],
-            "resume_path": job['resume_path']  # keep existing resume
+            "resume_path": job['resume_path'],  # keep existing resume
+            "status": request.form['status'],
+            "notes": request.form.get('notes', '') # New optional field
         }
         collection.update_one({"_id": ObjectId(job_id)}, {"$set": updated_data})
         return redirect(url_for('view_jobs'))
@@ -76,6 +102,19 @@ def delete_job(job_id):
     collection.delete_one({"_id": ObjectId(job_id)})
     return redirect(url_for("view_jobs"))
 
+@app.route("/delete_multiple", methods=["POST"])
+def delete_multiple_jobs():
+    job_ids = request.json.get('ids', [])
+    if not job_ids:
+        return jsonify({'success': False, 'error': 'No job IDs provided.'}), 400
+
+    object_ids = [ObjectId(job_id) for job_id in job_ids]
+    result = collection.delete_many({'_id': {'$in': object_ids}})
+
+    if result.deleted_count > 0:
+        return jsonify({'success': True, 'deleted_count': result.deleted_count})
+    else:
+        return jsonify({'success': False, 'error': 'No jobs found for the provided IDs.'}), 404
 
 if __name__ == "__main__":
     app.run(debug=True)
