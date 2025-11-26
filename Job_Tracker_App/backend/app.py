@@ -13,7 +13,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 Connection_String = "mongodb+srv://smruti2610:smruti2610@cluster0.digxvgs.mongodb.net/"
 client = MongoClient(Connection_String)
-db = client['jobTracker']
+db = client['demo_db']
 collection = db['applications']
 
 
