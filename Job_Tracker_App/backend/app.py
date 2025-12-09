@@ -4,11 +4,15 @@ from pymongo import MongoClient
 from bson import ObjectId
 import os
 from werkzeug.utils import secure_filename
+from werkzeug.middleware.proxy_fix import ProxyFix
 from collections import Counter
 import bcrypt
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', '706e450a3e48b74be868542782dcaad67dcce21899c441a3d15f5aa921391630')
+
+# Handle proxy headers (for running behind Cloudflare/nginx)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 UPLOAD_FOLDER = "resumes"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
