@@ -3,42 +3,355 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ 'Edit Job' if editing else 'Submit a Job' }}</title>
+  <title>{{ 'Edit Job' if editing else 'Submit a Job' }} - Job Tracker</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #0a0a0f;
+      min-height: 100vh;
+      color: #fff;
+    }
+
+    /* Navbar */
+    .navbar-custom {
+      background: rgba(10, 10, 15, 0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 16px 0;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .navbar-brand {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 1.4rem;
+      color: #fff !important;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+
+    .brand-icon svg {
+      width: 22px;
+      height: 22px;
+      fill: white;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .user-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 8px 18px;
+      border-radius: 50px;
+      color: #fff;
+      font-weight: 500;
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+      color: white;
+    }
+
+    .btn-logout {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      padding: 10px 22px;
+      border-radius: 10px;
+      font-weight: 600;
+      transition: all 0.25s ease;
+      text-decoration: none;
+    }
+
+    .btn-logout:hover {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    /* Page Header */
+    .page-header {
+      text-align: center;
+      padding: 48px 0 32px;
+    }
+
+    .page-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 36px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+
+    .page-subtitle {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 16px;
+    }
+
+    /* Card */
+    .form-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 20px;
+      padding: 40px;
+      backdrop-filter: blur(10px);
+    }
+
+    /* Form Styles */
+    .form-label {
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 10px;
+      font-size: 14px;
+      letter-spacing: 0.3px;
+    }
+
+    .form-control, .form-select {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 14px 18px;
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      transition: all 0.25s ease;
+    }
+
+    .form-control::placeholder {
+      color: rgba(255, 255, 255, 0.3);
+    }
+
+    .form-control:focus, .form-select:focus {
+      background: rgba(99, 102, 241, 0.05);
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+      color: #fff;
+    }
+
+    .form-select {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23888' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 16px center;
+      background-size: 16px 12px;
+    }
+
+    .form-select option {
+      background: #1a1a2e;
+      color: #fff;
+    }
+
+    textarea.form-control {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    /* Buttons */
+    .btn-primary {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border: none;
+      padding: 14px 36px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 15px;
+      transition: all 0.3s ease;
+      box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 35px rgba(99, 102, 241, 0.4);
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    }
+
+    .btn-outline-secondary {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: rgba(255, 255, 255, 0.7);
+      padding: 14px 36px;
+      border-radius: 12px;
+      font-weight: 600;
+      transition: all 0.25s ease;
+    }
+
+    .btn-outline-secondary:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.25);
+      color: #fff;
+    }
+
+    /* Alerts */
+    .alert {
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 12px;
+      color: #818cf8;
+    }
+
+    .alert-danger {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+    }
+
+    .alert-success {
+      background: rgba(34, 197, 94, 0.1);
+      border-color: rgba(34, 197, 94, 0.2);
+      color: #4ade80;
+    }
+
+    .btn-close {
+      filter: invert(1);
+    }
+
+    /* Footer */
+    footer {
+      background: transparent;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      margin-top: 60px;
+      padding: 24px 0;
+    }
+
+    footer .text-muted {
+      color: rgba(255, 255, 255, 0.35) !important;
+      font-size: 14px;
+    }
+
+    /* Section Titles */
+    .section-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.9);
+      margin-bottom: 24px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .form-card {
+        padding: 24px;
+      }
+      .page-title {
+        font-size: 28px;
+      }
+      .user-badge span:last-child {
+        display: none;
+      }
+    }
+  </style>
 </head>
-<body class="bg-light">
-  <div class="container mt-5">
-    <h2 class="mb-4 text-center">{{ 'Edit Job Details' if editing else 'Submit a Job' }}</h2>
-    <form action="{{ url_for('edit_job', job_id=job_id) if editing else url_for('submit') }}" method="POST" enctype="multipart/form-data" class="card shadow p-4 bg-white">
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-custom">
+    <div class="container">
+      <a class="navbar-brand" href="/">
+        <span class="brand-icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 6h-4V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6 0h-4V4h4v2z"/>
+          </svg>
+        </span>
+        Job Tracker
+      </a>
+      <div class="user-info">
+        <div class="user-badge">
+          <span class="user-avatar">{{ current_user.name[0].upper() }}</span>
+          <span>{{ current_user.name }}</span>
+        </div>
+        <a href="{{ url_for('logout') }}" class="btn-logout">Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="container mt-4">
+        {% for category, message in messages %}
+          <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <div class="container">
+    <div class="page-header">
+      <h1 class="page-title">{{ 'Edit Job Details' if editing else 'Add New Application' }}</h1>
+      <p class="page-subtitle">{{ 'Update your job application information' if editing else 'Track a new job application' }}</p>
+    </div>
+
+    <form action="{{ url_for('edit_job', job_id=job_id) if editing else url_for('submit') }}" method="POST" enctype="multipart/form-data" class="form-card">
       <div class="row">
-        <div class="col-md-6">
-          <div class="mb-3">
+        <div class="col-lg-6">
+          <h3 class="section-title">Job Information</h3>
+          <div class="mb-4">
             <label class="form-label">Job Position *</label>
-            <input type="text" name="position" value="{{ job.position if editing else '' }}" class="form-control" required>
+            <input type="text" name="position" value="{{ job.position if editing else '' }}" class="form-control" placeholder="e.g. Software Engineer" required>
           </div>
-          <div class="mb-3">
+          <div class="mb-4">
             <label class="form-label">Company Name *</label>
-            <input type="text" name="company_name" value="{{ job.company_name if editing else '' }}" class="form-control" required>
+            <input type="text" name="company_name" value="{{ job.company_name if editing else '' }}" class="form-control" placeholder="e.g. Google" required>
           </div>
-          <div class="mb-3">
-            <label class="form-label">Point of Contact (Optional)</label>
-            <input type="text" name="contact" value="{{ job.contact if editing else '' }}" class="form-control">
+          <div class="mb-4">
+            <label class="form-label">Point of Contact</label>
+            <input type="text" name="contact" value="{{ job.contact if editing else '' }}" class="form-control" placeholder="e.g. John Doe - Recruiter">
           </div>
-          <div class="mb-3">
-            <label class="form-label">Source of Applying *</label>
-            <input type="text" name="source" value="{{ job.source if editing else '' }}" class="form-control" required>
+          <div class="mb-4">
+            <label class="form-label">Source *</label>
+            <input type="text" name="source" value="{{ job.source if editing else '' }}" class="form-control" placeholder="e.g. LinkedIn, Company Website" required>
           </div>
-          <div class="mb-3">
-            <label class="form-label">Date of Application *</label>
+          <div class="mb-4">
+            <label class="form-label">Application Date *</label>
             <input type="date" name="application_date" value="{{ job.application_date if editing else '' }}" class="form-control" required>
           </div>
-          
         </div>
-        <div class="col-md-6">
-          <div class="mb-3">
+        <div class="col-lg-6">
+          <h3 class="section-title">Application Details</h3>
+          <div class="mb-4">
             <label class="form-label">Application Status *</label>
             <select name="status" class="form-select" required>
-              <option value="" disabled selected>Select Application Status</option>
+              <option value="" disabled {{ '' if editing else 'selected' }}>Select Status</option>
               <option value="Applied" {% if editing and job.status == 'Applied' %}selected{% endif %}>Applied</option>
               <option value="1st Round Interview" {% if editing and job.status == '1st Round Interview' %}selected{% endif %}>1st Round Interview</option>
               <option value="2nd Round Interview" {% if editing and job.status == '2nd Round Interview' %}selected{% endif %}>2nd Round Interview</option>
@@ -49,33 +362,35 @@
             </select>
           </div>
           {% if not editing %}
-          <div class="mb-3">
-            <label class="form-label">Upload Resume (PDF) *</label>
+          <div class="mb-4">
+            <label class="form-label">Resume (PDF) *</label>
             <input type="file" name="resume" accept="application/pdf" class="form-control" required>
           </div>
           {% endif %}
-          <div class="mb-3">
-            <label class="form-label">Job Description (Optional)</label>
-            <textarea name="description" class="form-control" rows="4">{{ job.description if editing else '' }}</textarea>
+          <div class="mb-4">
+            <label class="form-label">Job Description</label>
+            <textarea name="description" class="form-control" rows="4" placeholder="Paste job description here...">{{ job.description if editing else '' }}</textarea>
           </div>
-          <div class="mb-3">
-            <label class="form-label">Any Notes (Optional)</label>
-            <textarea name="notes" class="form-control" rows="3">{{ job.notes if editing else '' }}</textarea>
+          <div class="mb-4">
+            <label class="form-label">Notes</label>
+            <textarea name="notes" class="form-control" rows="3" placeholder="Any additional notes...">{{ job.notes if editing else '' }}</textarea>
           </div>
         </div>
       </div>
-      <div class="d-flex justify-content-between">
-        <button type="submit" class="btn btn-primary">{{ 'Update' if editing else 'Submit' }}</button>
-        <a href="/view" class="btn btn-outline-secondary">View Jobs</a>
+      <div class="d-flex justify-content-between mt-4 pt-3" style="border-top: 1px solid rgba(255,255,255,0.06);">
+        <button type="submit" class="btn btn-primary">{{ 'Update Application' if editing else 'Submit Application' }}</button>
+        <a href="/view" class="btn btn-outline-secondary">View All Jobs</a>
       </div>
     </form>
   </div>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-  <footer class="footer mt-auto py-3 bg-light">
+
+  <footer>
     <div class="container text-center">
-      <span class="text-muted">© 2025 Job Tracker App.<br> Developed by Smruti Shah. All rights reserved.</span>
+      <span class="text-muted">© 2025 Job Tracker. Built by Smruti Shah</span>
     </div>
   </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
