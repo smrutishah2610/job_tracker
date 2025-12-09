@@ -8,16 +8,17 @@ from collections import Counter
 import bcrypt
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key-change-in-production'
+app.secret_key = os.environ.get('SECRET_KEY', '706e450a3e48b74be868542782dcaad67dcce21899c441a3d15f5aa921391630')
 
 UPLOAD_FOLDER = "resumes"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-Connection_String = "mongodb+srv://smruti2610:smruti2610@cluster0.digxvgs.mongodb.net/"
+# Use environment variable for MongoDB connection (for security in production)
+Connection_String = os.environ.get('MONGODB_URI', 'mongodb+srv://smruti2610:smruti2610@cluster0.digxvgs.mongodb.net/')
 client = MongoClient(Connection_String)
 db = client['jobTracker']
-collection = db['joblist']
+collection = db['jobList']
 users_collection = db['users']
 
 # Flask-Login setup
