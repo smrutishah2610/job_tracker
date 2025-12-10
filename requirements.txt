@@ -1,0 +1,2 @@
+# Cloudflare Python Workers have built-in modules
+# No external dependencies required for D1 support

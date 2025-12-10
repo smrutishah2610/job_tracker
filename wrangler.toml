@@ -1,0 +1,39 @@
+name = "job-tracker"
+main = "worker.py"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["python_workers"]
+
+# D1 Database Binding
+# IMPORTANT: Replace database_id with your actual ID from `wrangler d1 list`
+# To create the database: wrangler d1 create jobtracker_db
+# To run migrations: wrangler d1 execute jobtracker_db --file=./migrations/0001_init.sql
+[[d1_databases]]
+binding = "JOBTRACKER_DB"
+database_name = "jobtracker_db"
+database_id = "b5469c73-d127-4ca9-9686-90e0997a18df"  # Get this from: wrangler d1 list
+
+[vars]
+# App configuration
+APP_SECRET = "change-this-to-a-secure-random-string"
+BASE_PATH = "/jobtracking"
+
+# ============================================================================
+# DEPLOYMENT INSTRUCTIONS
+# ============================================================================
+#
+# 1. Create the D1 database:
+#    wrangler d1 create jobtracker_db
+#
+# 2. Copy the database_id from the output and paste it above
+#
+# 3. Run the migration to create tables:
+#    wrangler d1 execute jobtracker_db --file=./migrations/0001_init.sql
+#
+# 4. Deploy the worker:
+#    wrangler deploy
+#
+# 5. In Cloudflare Dashboard, add route:
+#    smrutishah.com/jobtracking* -> job-tracker
+#
+# 6. Visit: https://smrutishah.com/jobtracking
+# ============================================================================
