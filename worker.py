@@ -82,6 +82,8 @@ LOGIN_HTML = """<!DOCTYPE html>
     .btn:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(99,102,241,0.4)}
     .btn-secondary{width:100%;padding:14px;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:rgba(255,255,255,0.7);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:all 0.25s;margin-top:8px}
     .btn-secondary:hover{background:rgba(255,255,255,0.05);color:#fff}
+    .forgot-link{text-align:center;margin-top:16px;color:rgba(255,255,255,0.6);font-size:14px;cursor:pointer;text-decoration:underline}
+    .forgot-link:hover{color:rgba(255,255,255,0.8)}
     footer{text-align:center;margin-top:36px;color:rgba(255,255,255,0.35);font-size:13px}
   </style>
 </head>
@@ -109,96 +111,149 @@ LOGIN_HTML = """<!DOCTYPE html>
         <button class="tab active" onclick="showForm('login')">Sign In</button>
         <button class="tab" onclick="showForm('register')">Sign Up</button>
       </div>
-      <form id="login-form" class="form active" onsubmit="requestOTP(event)">
-        <div class="group"><label>Email or Phone Number</label><input type="text" id="l-contact" placeholder="your@email.com or +1234567890" required></div>
-        <button type="submit" class="btn">Send OTP</button>
+      <form id="login-form" class="form active" onsubmit="login(event)">
+        <div class="group"><label>Email Address</label><input type="email" id="l-email" placeholder="your@email.com" required></div>
+        <div class="group"><label>Password</label><input type="password" id="l-pass" placeholder="Enter password" required></div>
+        <button type="submit" class="btn">Sign In</button>
+        <div class="forgot-link" onclick="showForgotPassword()">Forgot Password?</div>
         </form>
-      <form id="otp-form" class="form" onsubmit="verifyOTP(event)">
-        <div class="group"><label>Enter OTP</label><input type="text" id="otp-code" placeholder="6-digit code" maxlength="6" pattern="[0-9]{6}" required></div>
-        <div class="group" style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:-10px;margin-bottom:10px">We sent a code to <span id="otp-contact-display"></span></div>
-        <button type="submit" class="btn">Verify OTP</button>
-        <button type="button" class="btn-secondary" onclick="backToContact()" style="margin-top:12px">Change Email/Phone</button>
-        </form>
-      <form id="register-form" class="form" onsubmit="requestOTP(event,true)">
+      <form id="register-form" class="form" onsubmit="requestSignupOTP(event)">
         <div class="group"><label>Full Name</label><input type="text" id="r-name" placeholder="Your name" required></div>
-        <div class="group"><label>Email or Phone Number</label><input type="text" id="r-contact" placeholder="your@email.com or +1234567890" required></div>
-        <button type="submit" class="btn">Send OTP</button>
+        <div class="group"><label>Email Address *</label><input type="email" id="r-email" placeholder="your@email.com" required></div>
+        <div class="row">
+          <div class="group"><label>Password</label><input type="password" id="r-pass" placeholder="Min 6 chars" required></div>
+          <div class="group"><label>Confirm</label><input type="password" id="r-conf" placeholder="Repeat" required></div>
+        </div>
+        <button type="submit" class="btn">Send Verification Code</button>
         </form>
-      <form id="register-otp-form" class="form" onsubmit="verifyOTP(event,true)">
-        <div class="group"><label>Enter OTP</label><input type="text" id="register-otp-code" placeholder="6-digit code" maxlength="6" pattern="[0-9]{6}" required></div>
-        <div class="group" style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:-10px;margin-bottom:10px">We sent a code to <span id="register-otp-contact-display"></span></div>
+      <form id="register-otp-form" class="form" onsubmit="verifySignupOTP(event)">
+        <div class="group"><label>Enter OTP</label><input type="text" id="r-otp" placeholder="6-digit code" maxlength="6" pattern="[0-9]{6}" required></div>
+        <div class="group" style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:-10px;margin-bottom:10px">We sent a code to <span id="r-email-display"></span></div>
         <button type="submit" class="btn">Verify & Create Account</button>
-        <button type="button" class="btn-secondary" onclick="backToRegister()" style="margin-top:12px">Change Email/Phone</button>
+        <button type="button" class="btn-secondary" onclick="backToRegister()">Change Email</button>
+        </form>
+      <form id="forgot-form" class="form" onsubmit="requestResetOTP(event)">
+        <div class="group"><label>Email Address</label><input type="email" id="f-email" placeholder="your@email.com" required></div>
+        <button type="submit" class="btn">Send Reset Code</button>
+        <button type="button" class="btn-secondary" onclick="backToLogin()">Back to Login</button>
+        </form>
+      <form id="reset-otp-form" class="form" onsubmit="verifyResetOTP(event)">
+        <div class="group"><label>Enter OTP</label><input type="text" id="reset-otp" placeholder="6-digit code" maxlength="6" pattern="[0-9]{6}" required></div>
+        <div class="group" style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:-10px;margin-bottom:10px">We sent a code to <span id="reset-email-display"></span></div>
+        <div class="group"><label>New Password</label><input type="password" id="reset-pass" placeholder="Min 6 chars" required></div>
+        <div class="group"><label>Confirm Password</label><input type="password" id="reset-conf" placeholder="Repeat" required></div>
+        <button type="submit" class="btn">Reset Password</button>
+        <button type="button" class="btn-secondary" onclick="backToForgot()">Change Email</button>
         </form>
       <footer>© 2025 Job Tracker. Built by Smruti Shah</footer>
     </div>
   </div>
   <script>
     const B='/jobtracking';
-    let currentContact='',isRegister=false;
+    let signupData={},resetEmail='';
     function showForm(t){
       document.querySelectorAll('.tab').forEach((e,i)=>e.classList.toggle('active',t==='login'?i===0:i===1));
       document.getElementById('login-form').classList.toggle('active',t==='login');
       document.getElementById('register-form').classList.toggle('active',t==='register');
-      document.getElementById('otp-form').classList.remove('active');
       document.getElementById('register-otp-form').classList.remove('active');
+      document.getElementById('forgot-form').classList.remove('active');
+      document.getElementById('reset-otp-form').classList.remove('active');
       document.getElementById('title').textContent=t==='login'?'Welcome back':'Create account';
       document.getElementById('subtitle').textContent=t==='login'?'Sign in to continue':'Start your job search';
       document.getElementById('alert').className='alert';
-      currentContact='';
-      isRegister=t==='register';
+      signupData={};
     }
     function showAlert(m,t){const e=document.getElementById('alert');e.textContent=m;e.className='alert '+t}
-    function backToContact(){
+    function showForgotPassword(){
+      document.getElementById('login-form').classList.remove('active');
+      document.getElementById('forgot-form').classList.add('active');
+      document.getElementById('title').textContent='Reset Password';
+      document.getElementById('subtitle').textContent='Enter your email to receive reset code';
+      document.getElementById('alert').className='alert';
+    }
+    function backToLogin(){
+      document.getElementById('forgot-form').classList.remove('active');
       document.getElementById('login-form').classList.add('active');
-      document.getElementById('otp-form').classList.remove('active');
+      document.getElementById('title').textContent='Welcome back';
+      document.getElementById('subtitle').textContent='Sign in to continue';
       document.getElementById('alert').className='alert';
     }
     function backToRegister(){
-      document.getElementById('register-form').classList.add('active');
       document.getElementById('register-otp-form').classList.remove('active');
+      document.getElementById('register-form').classList.add('active');
       document.getElementById('alert').className='alert';
     }
-    async function requestOTP(e,register=false){
+    function backToForgot(){
+      document.getElementById('reset-otp-form').classList.remove('active');
+      document.getElementById('forgot-form').classList.add('active');
+      document.getElementById('alert').className='alert';
+    }
+    async function login(e){
       e.preventDefault();
-      const contact=register?document.getElementById('r-contact').value:document.getElementById('l-contact').value;
-      if(!contact){showAlert('Email or phone number is required','error');return}
-      currentContact=contact;
-      isRegister=register;
+      const email=document.getElementById('l-email').value,p=document.getElementById('l-pass').value;
       try{
-        const r=await fetch(B+'/api/auth/request-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contact:contact,is_register:register})});
+        const r=await fetch(B+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,password:p})});
         const d=await r.json();
-        if(d.success){
-          showAlert('OTP sent successfully! Check your email or phone.','success');
-          if(register){
-            document.getElementById('register-form').classList.remove('active');
-            document.getElementById('register-otp-form').classList.add('active');
-            document.getElementById('register-otp-contact-display').textContent=contact;
-          }else{
-            document.getElementById('login-form').classList.remove('active');
-            document.getElementById('otp-form').classList.add('active');
-            document.getElementById('otp-contact-display').textContent=contact;
-          }
-        }else{
-          showAlert(d.error||'Failed to send OTP','error')
-        }
+        if(d.success){localStorage.setItem('token',d.token);localStorage.setItem('user',JSON.stringify(d.user));window.location.href=B}
+        else showAlert(d.error||'Login failed','error')
       }catch(err){showAlert('Connection error','error')}
     }
-    async function verifyOTP(e,register=false){
+    async function requestSignupOTP(e){
       e.preventDefault();
-      const otp=register?document.getElementById('register-otp-code').value:document.getElementById('otp-code').value;
-      if(!otp||otp.length!==6){showAlert('Please enter a valid 6-digit OTP','error');return}
-      const name=register?document.getElementById('r-name').value:'';
+      const n=document.getElementById('r-name').value,email=document.getElementById('r-email').value,p=document.getElementById('r-pass').value,c=document.getElementById('r-conf').value;
+      if(p!==c){showAlert('Passwords do not match','error');return}
+      if(p.length<6){showAlert('Password must be at least 6 characters','error');return}
+      signupData={name:n,email:email,password:p};
       try{
-        const r=await fetch(B+'/api/auth/verify-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contact:currentContact,otp:otp,is_register:register,name:name})});
+        const r=await fetch(B+'/api/auth/request-signup-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email})});
         const d=await r.json();
         if(d.success){
-          localStorage.setItem('token',d.token);
-          localStorage.setItem('user',JSON.stringify(d.user));
-          window.location.href=B;
-        }else{
-          showAlert(d.error||'Invalid OTP','error')
-        }
+          showAlert('OTP sent successfully! Check your email.','success');
+          document.getElementById('register-form').classList.remove('active');
+          document.getElementById('register-otp-form').classList.add('active');
+          document.getElementById('r-email-display').textContent=email;
+        }else showAlert(d.error||'Failed to send OTP','error')
+      }catch(err){showAlert('Connection error','error')}
+    }
+    async function verifySignupOTP(e){
+      e.preventDefault();
+      const otp=document.getElementById('r-otp').value;
+      if(!otp||otp.length!==6){showAlert('Please enter a valid 6-digit OTP','error');return}
+      try{
+        const r=await fetch(B+'/api/auth/verify-signup-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:signupData.email,otp:otp,name:signupData.name,password:signupData.password})});
+        const d=await r.json();
+        if(d.success){localStorage.setItem('token',d.token);localStorage.setItem('user',JSON.stringify(d.user));window.location.href=B}
+        else showAlert(d.error||'Invalid OTP','error')
+      }catch(err){showAlert('Connection error','error')}
+    }
+    async function requestResetOTP(e){
+      e.preventDefault();
+      const email=document.getElementById('f-email').value;
+      resetEmail=email;
+      try{
+        const r=await fetch(B+'/api/auth/request-reset-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email})});
+        const d=await r.json();
+        if(d.success){
+          showAlert('OTP sent successfully! Check your email.','success');
+          document.getElementById('forgot-form').classList.remove('active');
+          document.getElementById('reset-otp-form').classList.add('active');
+          document.getElementById('reset-email-display').textContent=email;
+        }else showAlert(d.error||'Failed to send OTP','error')
+      }catch(err){showAlert('Connection error','error')}
+    }
+    async function verifyResetOTP(e){
+      e.preventDefault();
+      const otp=document.getElementById('reset-otp').value,p=document.getElementById('reset-pass').value,c=document.getElementById('reset-conf').value;
+      if(!otp||otp.length!==6){showAlert('Please enter a valid 6-digit OTP','error');return}
+      if(p!==c){showAlert('Passwords do not match','error');return}
+      if(p.length<6){showAlert('Password must be at least 6 characters','error');return}
+      try{
+        const r=await fetch(B+'/api/auth/verify-reset-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:resetEmail,otp:otp,new_password:p})});
+        const d=await r.json();
+        if(d.success){
+          showAlert('Password reset successfully! Redirecting to login...','success');
+          setTimeout(()=>{showForm('login');document.getElementById('reset-otp-form').classList.remove('active');},2000);
+        }else showAlert(d.error||'Invalid OTP','error')
       }catch(err){showAlert('Connection error','error')}
     }
     if(localStorage.getItem('token'))window.location.href=B;
@@ -723,15 +778,67 @@ def generate_otp():
     """Generate 6-digit OTP"""
     return ''.join([str(secrets.randbelow(10)) for _ in range(6)])
 
-def is_email(contact):
-    """Check if contact is an email address"""
-    return '@' in contact and '.' in contact.split('@')[1]
+def is_email(email):
+    """Check if email is valid"""
+    return '@' in email and '.' in email.split('@')[1] and len(email.split('@')[0]) > 0
 
-def is_phone(contact):
-    """Check if contact is a phone number"""
-    # Remove common phone number characters
-    digits = ''.join([c for c in contact if c.isdigit()])
-    return len(digits) >= 10
+async def send_email(env, to_email, subject, html_content):
+    """Send email using Resend API"""
+    try:
+        # Access secret from env (Cloudflare Workers Python)
+        # In Cloudflare Workers Python, secrets are accessed directly
+        api_key = env.RESEND_API_KEY
+        
+        if not api_key:
+            error_msg = "[ERROR] RESEND_API_KEY is empty or not found"
+            print(error_msg)
+            raise Exception(error_msg)
+        
+        # Use Resend API
+        from js import fetch, Object
+        
+        # Prepare email data
+        email_data = {
+            "from": "Job Tracker <noreply@smrutishah.com>",  # Using verified domain
+            "to": [to_email],
+            "subject": subject,
+            "html": html_content
+        }
+        
+        # Create Authorization header
+        auth_header = f"Bearer {api_key}"
+        
+        # Create headers - use Object.fromEntries for Cloudflare Workers
+        headers = Object.fromEntries([
+            ["Authorization", auth_header],
+            ["Content-Type", "application/json"]
+        ])
+        
+        # Make the API call
+        response = await fetch(
+            "https://api.resend.com/emails",
+            {
+                "method": "POST",
+                "headers": headers,
+                "body": json.dumps(email_data)
+            }
+        )
+        
+        # Check response
+        if response.status == 200:
+            return True
+        else:
+            error_text = await response.text()
+            print(f"Email send failed: {response.status} - {error_text}")
+            return False
+    except AttributeError as e:
+        error_msg = f"[ERROR] RESEND_API_KEY not accessible: {str(e)}"
+        print(error_msg)
+        raise Exception(error_msg)
+    except Exception as e:
+        error_msg = str(e)
+        print(f"Email send error: {error_msg}")
+        raise Exception(f"Failed to send email: {error_msg}")
 
 def parse_path(url):
     """Extract path from URL"""
@@ -808,52 +915,34 @@ async def get_user_from_token(request):
     token = auth[7:]
     
     session = await db_first(
-        "SELECT s.user_id, u.email, u.phone, u.name FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token = ?",
+        "SELECT s.user_id, u.email, u.name FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token = ?",
         [token]
     )
     return session
 
-async def handle_request_otp(request):
-    """POST /jobtracking/api/auth/request-otp - Request OTP for login/register"""
+async def handle_request_signup_otp(request, env):
+    """POST /jobtracking/api/auth/request-signup-otp - Request OTP for signup"""
     try:
         body = json.loads(await request.text())
-        contact = (body.get("contact") or "").strip()
-        is_register = body.get("is_register", False)
+        email = (body.get("email") or "").strip()
         
-        if not contact:
-            return error("Email or phone number is required")
+        if not email:
+            return error("Email address is required")
         
-        # Validate contact format
-        if not is_email(contact) and not is_phone(contact):
-            return error("Please enter a valid email address or phone number")
+        # Validate email format
+        if not is_email(email):
+            return error("Please enter a valid email address")
         
-        # Check if user exists (for login) or doesn't exist (for register)
-        if is_register:
-            # For registration, check if user already exists
-            if is_email(contact):
-                existing = await db_first("SELECT id FROM users WHERE email = ?", [contact])
-            else:
-                existing = await db_first("SELECT id FROM users WHERE phone = ?", [contact])
-            
-            if existing:
-                return error("An account with this email/phone already exists. Please login instead.")
-        else:
-            # For login, check if user exists
-            if is_email(contact):
-                existing = await db_first("SELECT id FROM users WHERE email = ?", [contact])
-            else:
-                existing = await db_first("SELECT id FROM users WHERE phone = ?", [contact])
-            
-            if not existing:
-                return error("No account found. Please register first.")
+        # Check if user already exists
+        existing = await db_first("SELECT id FROM users WHERE email = ?", [email])
+        if existing:
+            return error("An account with this email already exists. Please login instead.")
         
         # Generate OTP
         otp = generate_otp()
-        expires_at = datetime.now().timestamp() + 600  # 10 minutes from now
+        expires_at = datetime.now().timestamp() + 600  # 10 minutes
         
-        # Store OTP in database (create otp_codes table if needed)
-        # For now, we'll use a simple approach - store in sessions table temporarily
-        # In production, you'd want a separate otp_codes table
+        # Create OTP table if needed
         try:
             await db_execute(
                 """CREATE TABLE IF NOT EXISTS otp_codes (
@@ -868,44 +957,73 @@ async def handle_request_otp(request):
         except:
             pass  # Table might already exist
         
-        # Delete old OTPs for this contact
-        await db_execute("DELETE FROM otp_codes WHERE contact = ? OR expires_at < ?", [contact, datetime.now().timestamp()])
+        # Delete old OTPs for this email
+        await db_execute("DELETE FROM otp_codes WHERE contact = ? OR expires_at < ?", [email, datetime.now().timestamp()])
         
         # Insert new OTP
         await db_execute(
             "INSERT INTO otp_codes (contact, otp, expires_at) VALUES (?, ?, ?)",
-            [contact, otp, expires_at]
+            [email, otp, expires_at]
         )
         
-        # In production, send OTP via email/SMS service
-        # For now, we'll return it in the response (for testing only)
-        # TODO: Integrate with email/SMS service
+        # Send OTP via email
+        email_html = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #6366f1;">Job Tracker - Verification Code</h2>
+                <p>Thank you for signing up! Use the verification code below to complete your registration:</p>
+                <div style="background: #f3f4f6; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
+                    <h1 style="color: #6366f1; margin: 0; font-size: 32px; letter-spacing: 4px;">{otp}</h1>
+                </div>
+                <p style="color: #666; font-size: 14px;">This code will expire in 10 minutes.</p>
+                <p style="color: #666; font-size: 14px;">If you didn't request this code, please ignore this email.</p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        try:
+            email_sent = await send_email(env, email, "Job Tracker - Verification Code", email_html)
+            
+            if not email_sent:
+                return error("Failed to send verification email. Please try again later.", 500)
+        except Exception as email_error:
+            # Log the error but don't fail the request - OTP is still saved
+            print(f"Email sending error: {str(email_error)}")
+            # Return error with more details for debugging
+            return error(f"Failed to send email: {str(email_error)}", 500)
+        
         return success({
-            "message": "OTP sent successfully",
-            "otp": otp  # Remove this in production - only for testing
+            "message": "Verification code sent successfully to your email"
         })
     except Exception as e:
-        return error(str(e), 500)
+        error_msg = str(e)
+        print(f"Request signup OTP error: {error_msg}")
+        return error(error_msg, 500)
 
-async def handle_verify_otp(request):
-    """POST /jobtracking/api/auth/verify-otp - Verify OTP and login/register"""
+async def handle_verify_signup_otp(request):
+    """POST /jobtracking/api/auth/verify-signup-otp - Verify OTP and create account"""
     try:
         body = json.loads(await request.text())
-        contact = (body.get("contact") or "").strip()
+        email = (body.get("email") or "").strip()
         otp = (body.get("otp") or "").strip()
-        is_register = body.get("is_register", False)
-        name = (body.get("name") or "").strip() if is_register else ""
+        name = (body.get("name") or "").strip()
+        password = body.get("password") or ""
         
-        if not contact or not otp:
-            return error("Contact and OTP are required")
+        if not email or not otp or not name or not password:
+            return error("All fields are required")
         
         if len(otp) != 6:
             return error("OTP must be 6 digits")
         
+        if len(password) < 6:
+            return error("Password must be at least 6 characters")
+        
         # Verify OTP
         otp_record = await db_first(
             "SELECT contact, otp, expires_at FROM otp_codes WHERE contact = ? AND otp = ? ORDER BY created_at DESC LIMIT 1",
-            [contact, otp]
+            [email, otp]
         )
         
         if not otp_record:
@@ -913,39 +1031,22 @@ async def handle_verify_otp(request):
         
         # Check if OTP expired
         if otp_record["expires_at"] < datetime.now().timestamp():
-            await db_execute("DELETE FROM otp_codes WHERE contact = ? AND otp = ?", [contact, otp])
+            await db_execute("DELETE FROM otp_codes WHERE contact = ? AND otp = ?", [email, otp])
             return error("OTP has expired. Please request a new one.", 401)
         
         # Delete used OTP
-        await db_execute("DELETE FROM otp_codes WHERE contact = ? AND otp = ?", [contact, otp])
+        await db_execute("DELETE FROM otp_codes WHERE contact = ? AND otp = ?", [email, otp])
         
-        if is_register:
-            # Create new user
-            email = contact if is_email(contact) else None
-            phone = contact if is_phone(contact) else None
-            
-            if not name:
-                return error("Name is required for registration")
-            
-            await db_execute(
-                "INSERT INTO users (email, phone, name) VALUES (?, ?, ?)",
-                [email, phone, name]
-            )
-            
-            # Get new user
-            if email:
-                user = await db_first("SELECT id, email, phone, name FROM users WHERE email = ?", [email])
-            else:
-                user = await db_first("SELECT id, email, phone, name FROM users WHERE phone = ?", [phone])
-        else:
-            # Get existing user
-            if is_email(contact):
-                user = await db_first("SELECT id, email, phone, name FROM users WHERE email = ?", [contact])
-            else:
-                user = await db_first("SELECT id, email, phone, name FROM users WHERE phone = ?", [contact])
+        # Create user
+        password_hash = hash_password(password)
         
-        if not user:
-            return error("User not found", 404)
+        await db_execute(
+            "INSERT INTO users (email, name, password_hash) VALUES (?, ?, ?)",
+            [email, name, password_hash]
+        )
+        
+        # Get new user
+        user = await db_first("SELECT id, email, name FROM users WHERE email = ?", [email])
         
         # Create session
         token = generate_token()
@@ -956,12 +1057,40 @@ async def handle_verify_otp(request):
         
         return success({
             "token": token,
-            "user": {
-                "id": user["id"],
-                "name": user["name"],
-                "email": user.get("email"),
-                "phone": user.get("phone")
-            }
+            "user": {"id": user["id"], "name": user["name"], "email": user.get("email")}
+        })
+    except Exception as e:
+        return error(str(e), 500)
+
+async def handle_login(request):
+    """POST /jobtracking/api/auth/login"""
+    try:
+        body = json.loads(await request.text())
+        email = (body.get("email") or "").strip()
+        password = body.get("password") or ""
+        
+        if not email or not password:
+            return error("Email and password required")
+        
+        if not is_email(email):
+            return error("Please enter a valid email address")
+        
+        # Find user by email
+        user = await db_first("SELECT id, email, name, password_hash FROM users WHERE email = ?", [email])
+        
+        if not user or not verify_password(password, user["password_hash"]):
+            return error("Invalid email or password", 401)
+        
+        # Create session
+        token = generate_token()
+        await db_execute(
+            "INSERT INTO sessions (user_id, token) VALUES (?, ?)",
+            [user["id"], token]
+        )
+        
+        return success({
+            "token": token,
+            "user": {"id": user["id"], "name": user["name"], "email": user.get("email")}
         })
     except Exception as e:
         return error(str(e), 500)
@@ -973,6 +1102,109 @@ async def handle_logout(request):
         token = auth[7:]
         await db_execute("DELETE FROM sessions WHERE token = ?", [token])
     return success({"message": "Logged out"})
+
+async def handle_request_reset_otp(request, env):
+    """POST /jobtracking/api/auth/request-reset-otp - Request OTP for password reset"""
+    try:
+        body = json.loads(await request.text())
+        email = (body.get("email") or "").strip()
+        
+        if not email:
+            return error("Email is required")
+        
+        if not is_email(email):
+            return error("Please enter a valid email address")
+        
+        # Check if user exists
+        user = await db_first("SELECT id, email FROM users WHERE email = ?", [email])
+        if not user:
+            return error("No account found with this email address")
+        
+        # Generate OTP
+        otp = generate_otp()
+        expires_at = datetime.now().timestamp() + 600  # 10 minutes
+        
+        # Delete old OTPs for this email
+        await db_execute("DELETE FROM otp_codes WHERE contact = ? OR expires_at < ?", [email, datetime.now().timestamp()])
+        
+        # Insert new OTP
+        await db_execute(
+            "INSERT INTO otp_codes (contact, otp, expires_at) VALUES (?, ?, ?)",
+            [email, otp, expires_at]
+        )
+        
+        # Send OTP via email
+        email_html = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #6366f1;">Job Tracker - Password Reset Code</h2>
+                <p>You requested to reset your password. Use the verification code below:</p>
+                <div style="background: #f3f4f6; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
+                    <h1 style="color: #6366f1; margin: 0; font-size: 32px; letter-spacing: 4px;">{otp}</h1>
+                </div>
+                <p style="color: #666; font-size: 14px;">This code will expire in 10 minutes.</p>
+                <p style="color: #666; font-size: 14px;">If you didn't request this code, please ignore this email and your password will remain unchanged.</p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        email_sent = await send_email(env, email, "Job Tracker - Password Reset Code", email_html)
+        
+        if not email_sent:
+            return error("Failed to send reset code email. Please try again later.", 500)
+        
+        return success({
+            "message": "Password reset code sent successfully to your email"
+        })
+    except Exception as e:
+        return error(str(e), 500)
+
+async def handle_verify_reset_otp(request):
+    """POST /jobtracking/api/auth/verify-reset-otp - Verify OTP and reset password"""
+    try:
+        body = json.loads(await request.text())
+        email = (body.get("email") or "").strip()
+        otp = (body.get("otp") or "").strip()
+        new_password = body.get("new_password") or ""
+        
+        if not email or not otp or not new_password:
+            return error("All fields are required")
+        
+        if len(otp) != 6:
+            return error("OTP must be 6 digits")
+        
+        if len(new_password) < 6:
+            return error("Password must be at least 6 characters")
+        
+        # Verify OTP
+        otp_record = await db_first(
+            "SELECT contact, otp, expires_at FROM otp_codes WHERE contact = ? AND otp = ? ORDER BY created_at DESC LIMIT 1",
+            [email, otp]
+        )
+        
+        if not otp_record:
+            return error("Invalid OTP", 401)
+        
+        # Check if OTP expired
+        if otp_record["expires_at"] < datetime.now().timestamp():
+            await db_execute("DELETE FROM otp_codes WHERE contact = ? AND otp = ?", [email, otp])
+            return error("OTP has expired. Please request a new one.", 401)
+        
+        # Delete used OTP
+        await db_execute("DELETE FROM otp_codes WHERE contact = ? AND otp = ?", [email, otp])
+        
+        # Update password
+        password_hash = hash_password(new_password)
+        await db_execute(
+            "UPDATE users SET password_hash = ? WHERE email = ?",
+            [password_hash, email]
+        )
+        
+        return success({"message": "Password reset successfully"})
+    except Exception as e:
+        return error(str(e), 500)
 
 # ============================================================================
 # JOB HANDLERS
@@ -1327,14 +1559,23 @@ async def on_fetch(request, env):
     
     # ========== AUTH API ==========
     
-    if path == "/jobtracking/api/auth/request-otp" and method == "POST":
-        return await handle_request_otp(request)
+    if path == "/jobtracking/api/auth/request-signup-otp" and method == "POST":
+        return await handle_request_signup_otp(request, env)
     
-    if path == "/jobtracking/api/auth/verify-otp" and method == "POST":
-        return await handle_verify_otp(request)
+    if path == "/jobtracking/api/auth/verify-signup-otp" and method == "POST":
+        return await handle_verify_signup_otp(request)
+    
+    if path == "/jobtracking/api/auth/login" and method == "POST":
+        return await handle_login(request)
     
     if path == "/jobtracking/api/auth/logout" and method == "POST":
         return await handle_logout(request)
+    
+    if path == "/jobtracking/api/auth/request-reset-otp" and method == "POST":
+        return await handle_request_reset_otp(request, env)
+    
+    if path == "/jobtracking/api/auth/verify-reset-otp" and method == "POST":
+        return await handle_verify_reset_otp(request)
     
     # ========== JOBS API ==========
     
