@@ -10,9 +10,11 @@ A modern job application tracking system built as a **Cloudflare Python Worker**
 
 - 🔐 **User Authentication** - Register & login with secure sessions
 - 📋 **Track Applications** - Add, edit, delete job applications
+- 📄 **Resume Management** - Upload and view resumes for each job application
 - 🏷️ **Status Filtering** - Filter by Applied, Interview, Accepted, Declined
 - 🌙 **Dark Theme UI** - Modern, responsive design
 - ⚡ **D1 Database** - Cloudflare's serverless SQLite
+- 📄 **Base64 Storage** - Resumes stored directly in database (free, no additional services)
 
 ---
 
@@ -22,6 +24,7 @@ A modern job application tracking system built as a **Cloudflare Python Worker**
 |-----------|------------|
 | Runtime | Cloudflare Workers (Python) |
 | Database | Cloudflare D1 (SQLite) |
+| Storage | Base64 in D1 (free, no R2 needed) |
 | Frontend | Vanilla JS (embedded) |
 | Auth | Token-based sessions |
 
@@ -68,10 +71,13 @@ wrangler d1 create jobtracker_db
 # 4. Run migrations to create tables
 wrangler d1 execute jobtracker_db --file=./migrations/0001_init.sql
 
-# 5. Test locally
+# 5. Add resume_data column (for base64 storage)
+wrangler d1 execute jobtracker_db --file=./migrations/0002_add_resume_data.sql
+
+# 6. Test locally
 wrangler dev
 
-# 6. Deploy
+# 7. Deploy
 wrangler deploy
 ```
 
@@ -99,6 +105,8 @@ smrutishah.com/jobtracking* → job-tracker
 | PUT | `/jobtracking/api/jobs/:id` | Update job |
 | DELETE | `/jobtracking/api/jobs/:id` | Delete job |
 | GET | `/jobtracking/api/jobs/stats` | Status counts |
+| POST | `/jobtracking/api/jobs/:id/resume` | Upload resume (PDF) |
+| GET | `/jobtracking/api/jobs/:id/resume` | View/download resume |
 
 ---
 
@@ -129,6 +137,8 @@ smrutishah.com/jobtracking* → job-tracker
 | application_date | TEXT | Date applied |
 | status | TEXT | Application status |
 | notes | TEXT | Personal notes |
+| resume_url | TEXT | Resume URL (for compatibility) |
+| resume_data | TEXT | Base64-encoded PDF content |
 | created_at | TEXT | Timestamp |
 | updated_at | TEXT | Timestamp |
 
