@@ -80,6 +80,8 @@ LOGIN_HTML = """<!DOCTYPE html>
     .group input:focus{outline:none;border-color:#6366f1;background:rgba(99,102,241,0.05);box-shadow:0 0 0 3px rgba(99,102,241,0.1)}
     .btn{width:100%;padding:16px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;border-radius:12px;color:#fff;font-family:'DM Sans',sans-serif;font-size:16px;font-weight:600;cursor:pointer;transition:all 0.3s;box-shadow:0 8px 30px rgba(99,102,241,0.3);margin-top:8px}
     .btn:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(99,102,241,0.4)}
+    .btn-secondary{width:100%;padding:14px;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:rgba(255,255,255,0.7);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:all 0.25s;margin-top:8px}
+    .btn-secondary:hover{background:rgba(255,255,255,0.05);color:#fff}
     footer{text-align:center;margin-top:36px;color:rgba(255,255,255,0.35);font-size:13px}
   </style>
 </head>
@@ -87,11 +89,11 @@ LOGIN_HTML = """<!DOCTYPE html>
   <div class="left">
     <div class="logo">
       <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M20 6h-4V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6 0h-4V4h4v2z"/></svg></div>
-      <span>Job Tracker</span>
-    </div>
+        <span>Job Tracker</span>
+      </div>
     <h2 class="tagline">Land your<br><em>dream job</em><br>faster.</h2>
     <p class="desc">Track every application, stay organized, and never miss an opportunity.</p>
-  </div>
+    </div>
   <div class="right">
     <div class="form-wrap">
       <div class="mobile-logo">
@@ -107,56 +109,96 @@ LOGIN_HTML = """<!DOCTYPE html>
         <button class="tab active" onclick="showForm('login')">Sign In</button>
         <button class="tab" onclick="showForm('register')">Sign Up</button>
       </div>
-      <form id="login-form" class="form active" onsubmit="login(event)">
-        <div class="group"><label>Username</label><input type="text" id="l-user" placeholder="Enter username" required></div>
-        <div class="group"><label>Password</label><input type="password" id="l-pass" placeholder="Enter password" required></div>
-        <button type="submit" class="btn">Sign In</button>
-      </form>
-      <form id="register-form" class="form" onsubmit="register(event)">
-        <div class="row">
-          <div class="group"><label>Full Name</label><input type="text" id="r-name" placeholder="Your name" required></div>
-          <div class="group"><label>Username</label><input type="text" id="r-user" placeholder="Username" required></div>
-        </div>
-        <div class="group"><label>Email (optional)</label><input type="email" id="r-email" placeholder="your@email.com"></div>
-        <div class="row">
-          <div class="group"><label>Password</label><input type="password" id="r-pass" placeholder="Min 6 chars" required></div>
-          <div class="group"><label>Confirm</label><input type="password" id="r-conf" placeholder="Repeat" required></div>
-        </div>
-        <button type="submit" class="btn">Create Account</button>
-      </form>
+      <form id="login-form" class="form active" onsubmit="requestOTP(event)">
+        <div class="group"><label>Email or Phone Number</label><input type="text" id="l-contact" placeholder="your@email.com or +1234567890" required></div>
+        <button type="submit" class="btn">Send OTP</button>
+        </form>
+      <form id="otp-form" class="form" onsubmit="verifyOTP(event)">
+        <div class="group"><label>Enter OTP</label><input type="text" id="otp-code" placeholder="6-digit code" maxlength="6" pattern="[0-9]{6}" required></div>
+        <div class="group" style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:-10px;margin-bottom:10px">We sent a code to <span id="otp-contact-display"></span></div>
+        <button type="submit" class="btn">Verify OTP</button>
+        <button type="button" class="btn-secondary" onclick="backToContact()" style="margin-top:12px">Change Email/Phone</button>
+        </form>
+      <form id="register-form" class="form" onsubmit="requestOTP(event,true)">
+        <div class="group"><label>Full Name</label><input type="text" id="r-name" placeholder="Your name" required></div>
+        <div class="group"><label>Email or Phone Number</label><input type="text" id="r-contact" placeholder="your@email.com or +1234567890" required></div>
+        <button type="submit" class="btn">Send OTP</button>
+        </form>
+      <form id="register-otp-form" class="form" onsubmit="verifyOTP(event,true)">
+        <div class="group"><label>Enter OTP</label><input type="text" id="register-otp-code" placeholder="6-digit code" maxlength="6" pattern="[0-9]{6}" required></div>
+        <div class="group" style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:-10px;margin-bottom:10px">We sent a code to <span id="register-otp-contact-display"></span></div>
+        <button type="submit" class="btn">Verify & Create Account</button>
+        <button type="button" class="btn-secondary" onclick="backToRegister()" style="margin-top:12px">Change Email/Phone</button>
+        </form>
       <footer>© 2025 Job Tracker. Built by Smruti Shah</footer>
     </div>
   </div>
   <script>
     const B='/jobtracking';
+    let currentContact='',isRegister=false;
     function showForm(t){
       document.querySelectorAll('.tab').forEach((e,i)=>e.classList.toggle('active',t==='login'?i===0:i===1));
       document.getElementById('login-form').classList.toggle('active',t==='login');
       document.getElementById('register-form').classList.toggle('active',t==='register');
+      document.getElementById('otp-form').classList.remove('active');
+      document.getElementById('register-otp-form').classList.remove('active');
       document.getElementById('title').textContent=t==='login'?'Welcome back':'Create account';
       document.getElementById('subtitle').textContent=t==='login'?'Sign in to continue':'Start your job search';
       document.getElementById('alert').className='alert';
+      currentContact='';
+      isRegister=t==='register';
     }
     function showAlert(m,t){const e=document.getElementById('alert');e.textContent=m;e.className='alert '+t}
-    async function login(e){
+    function backToContact(){
+      document.getElementById('login-form').classList.add('active');
+      document.getElementById('otp-form').classList.remove('active');
+      document.getElementById('alert').className='alert';
+    }
+    function backToRegister(){
+      document.getElementById('register-form').classList.add('active');
+      document.getElementById('register-otp-form').classList.remove('active');
+      document.getElementById('alert').className='alert';
+    }
+    async function requestOTP(e,register=false){
       e.preventDefault();
-      const u=document.getElementById('l-user').value,p=document.getElementById('l-pass').value;
+      const contact=register?document.getElementById('r-contact').value:document.getElementById('l-contact').value;
+      if(!contact){showAlert('Email or phone number is required','error');return}
+      currentContact=contact;
+      isRegister=register;
       try{
-        const r=await fetch(B+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+        const r=await fetch(B+'/api/auth/request-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contact:contact,is_register:register})});
         const d=await r.json();
-        if(d.success){localStorage.setItem('token',d.token);localStorage.setItem('user',JSON.stringify(d.user));window.location.href=B}
-        else showAlert(d.error||'Login failed','error')
+        if(d.success){
+          showAlert('OTP sent successfully! Check your email or phone.','success');
+          if(register){
+            document.getElementById('register-form').classList.remove('active');
+            document.getElementById('register-otp-form').classList.add('active');
+            document.getElementById('register-otp-contact-display').textContent=contact;
+          }else{
+            document.getElementById('login-form').classList.remove('active');
+            document.getElementById('otp-form').classList.add('active');
+            document.getElementById('otp-contact-display').textContent=contact;
+          }
+        }else{
+          showAlert(d.error||'Failed to send OTP','error')
+        }
       }catch(err){showAlert('Connection error','error')}
     }
-    async function register(e){
+    async function verifyOTP(e,register=false){
       e.preventDefault();
-      const n=document.getElementById('r-name').value,u=document.getElementById('r-user').value,em=document.getElementById('r-email').value,p=document.getElementById('r-pass').value,c=document.getElementById('r-conf').value;
-      if(p!==c){showAlert('Passwords do not match','error');return}
+      const otp=register?document.getElementById('register-otp-code').value:document.getElementById('otp-code').value;
+      if(!otp||otp.length!==6){showAlert('Please enter a valid 6-digit OTP','error');return}
+      const name=register?document.getElementById('r-name').value:'';
       try{
-        const r=await fetch(B+'/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n,username:u,email:em,password:p})});
+        const r=await fetch(B+'/api/auth/verify-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contact:currentContact,otp:otp,is_register:register,name:name})});
         const d=await r.json();
-        if(d.success){localStorage.setItem('token',d.token);localStorage.setItem('user',JSON.stringify(d.user));window.location.href=B}
-        else showAlert(d.error||'Registration failed','error')
+        if(d.success){
+          localStorage.setItem('token',d.token);
+          localStorage.setItem('user',JSON.stringify(d.user));
+          window.location.href=B;
+        }else{
+          showAlert(d.error||'Invalid OTP','error')
+        }
       }catch(err){showAlert('Connection error','error')}
     }
     if(localStorage.getItem('token'))window.location.href=B;
@@ -222,6 +264,9 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     .field label{display:block;color:rgba(255,255,255,0.7);font-size:13px;font-weight:600;margin-bottom:10px}
     .field input,.field select,.field textarea{width:100%;padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;transition:all 0.25s}
     .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent);background:rgba(99,102,241,0.05)}
+    .field input[type="file"]{padding:10px;cursor:pointer}
+    .field input[type="file"]::file-selector-button{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600;margin-right:12px;transition:all 0.25s}
+    .field input[type="file"]::file-selector-button:hover{opacity:0.9;transform:translateY(-1px)}
     .field select{appearance:none;background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23888' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");background-repeat:no-repeat;background-position:right 16px center;background-size:16px 12px}
     .field select option{background:#1a1a2e}
     .form-actions{display:flex;gap:16px;margin-top:32px;padding-top:32px;border-top:1px solid var(--border)}
@@ -269,17 +314,17 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <div class="page-header"><h1>My Applications</h1><p>Track and manage all your job applications</p></div>
     <div class="tabs">
       <button class="tab active" onclick="showTab('list')">My Jobs</button>
-      <button class="tab" onclick="showTab('add')">+ Add Job</button>
+      <button class="tab" onclick="showTab('add');resetForm()">+ Add Job</button>
     </div>
     <div id="list-tab">
       <div class="filters" id="filters"></div>
       <div class="grid" id="jobs"></div>
       <div id="empty" class="empty hidden"><h3>No applications yet</h3><p>Start tracking by adding your first application</p><button class="btn-primary" onclick="showTab('add')">+ Add Application</button></div>
-    </div>
+      </div>
     <div id="add-tab" class="form-panel">
       <h2 id="form-title" style="font-family:'Space Grotesk',sans-serif;font-size:24px;margin-bottom:28px;color:#fff">Add New Application</h2>
-      <form id="job-form" onsubmit="submitJob(event)">
-        <input type="hidden" id="edit-id">
+      <form id="job-form" onsubmit="submitJob(event)" enctype="multipart/form-data">
+        <input type="hidden" id="edit-id" value="">
         <div class="form-grid">
           <div class="section">
             <h3>Job Information</h3>
@@ -288,7 +333,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             <div class="field"><label>Contact</label><input type="text" id="f-contact" placeholder="e.g. John Doe - Recruiter"></div>
             <div class="field"><label>Source *</label><input type="text" id="f-source" placeholder="e.g. LinkedIn" required></div>
             <div class="field"><label>Date Applied *</label><input type="date" id="f-date" required></div>
-          </div>
+            </div>
           <div class="section">
             <h3>Details</h3>
             <div class="field">
@@ -306,11 +351,13 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             </div>
             <div class="field"><label>Description</label><textarea id="f-desc" rows="4" placeholder="Job description..."></textarea></div>
             <div class="field"><label>Notes</label><textarea id="f-notes" rows="3" placeholder="Your notes..."></textarea></div>
+            <div class="field" id="resume-field"><label>Resume (PDF) <span id="resume-required">*</span></label><input type="file" id="f-resume" accept="application/pdf" style="padding:10px"></div>
+            <div id="resume-status" style="font-size:13px;color:rgba(255,255,255,0.6);margin-top:8px;display:none"></div>
           </div>
         </div>
         <div class="form-actions">
           <button type="submit" class="btn-primary" id="submit-btn">Submit</button>
-          <button type="button" class="btn-secondary" onclick="resetForm()">Cancel</button>
+          <button type="button" class="btn-secondary" onclick="resetForm();showTab('list')">Cancel</button>
         </div>
       </form>
     </div>
@@ -331,6 +378,10 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         </div>
         <div id="m-desc-sec" class="detail-section"><h4>Description</h4><div id="m-desc" class="detail-content"></div></div>
         <div id="m-notes-sec" class="detail-section"><h4>Notes</h4><div id="m-notes" class="detail-content"></div></div>
+        <div id="m-resume-sec" class="detail-section" style="display:none">
+          <h4>Resume</h4>
+          <button id="m-resume-link" onclick="viewResume()" class="btn-primary" style="display:inline-block;margin-top:12px;cursor:pointer">📄 View Resume</button>
+      </div>
       </div>
       <div class="modal-foot">
         <button class="btn-edit" onclick="editCurrent()">Edit</button>
@@ -348,7 +399,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     loadJobs();
 
     function showTab(t,isEdit){
-      document.querySelectorAll('.tab').forEach((e,i)=>e.classList.toggle('active',t==='list'?i===0:i===1));
+      const tabs=['list','add'];
+      document.querySelectorAll('.tab').forEach((e,i)=>e.classList.toggle('active',tabs.indexOf(t)===i));
       document.getElementById('list-tab').classList.toggle('hidden',t!=='list');
       document.getElementById('add-tab').classList.toggle('active',t==='add');
       if(t==='add'&&!isEdit)resetForm();
@@ -403,15 +455,35 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       document.getElementById('m-desc').textContent=j.description||'';
       document.getElementById('m-notes-sec').classList.toggle('hidden',!j.notes);
       document.getElementById('m-notes').textContent=j.notes||'';
+      // Check if resume exists (either resume_url or resume_data)
+      const hasResume=(j.resume_url&&j.resume_url.trim()!=='')||(j.resume_data&&j.resume_data.trim()!=='');
+      document.getElementById('m-resume-sec').style.display=hasResume?'block':'none';
+      if(hasResume){
+        document.getElementById('m-resume-link').href=B+'/api/jobs/'+j.id+'/resume';
+      }
       document.getElementById('modal').classList.add('active');
     }
     function closeModal(){document.getElementById('modal').classList.remove('active');currentId=null}
     function editCurrent(){
-      const editId=currentId;  // Save before closing modal
-      const j=jobs.find(x=>x.id===editId);
-      if(!j){console.error('Job not found:',editId);return;}
-      closeModal();  // This sets currentId to null, but we have editId saved
-      document.getElementById('edit-id').value=String(editId);
+      const j=jobs.find(x=>x.id===currentId);
+      if(!j){console.error('Job not found:',currentId);return;}
+      const editId=String(currentId); // Save ID before closing modal
+      closeModal();
+      
+      // Set edit-id in multiple places to ensure it's preserved
+      const idInput=document.getElementById('edit-id');
+      if(idInput){
+        idInput.value=editId;
+        idInput.setAttribute('value',editId); // Also set as attribute
+      }
+      
+      // Also store in form data attribute as backup
+      const form=document.getElementById('job-form');
+      if(form){
+        form.dataset.editId=editId;
+      }
+      
+      // Populate form fields
       document.getElementById('f-position').value=j.position||'';
       document.getElementById('f-company').value=j.company_name||'';
       document.getElementById('f-contact').value=j.contact||'';
@@ -422,93 +494,175 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       document.getElementById('f-notes').value=j.notes||'';
       document.getElementById('submit-btn').textContent='Update Job';
       document.getElementById('form-title').textContent='Edit Application: '+j.position;
-      console.log('Editing job:',editId,j);
+      
+      // Hide resume field for editing (like Flask - resume is optional on update)
+      document.getElementById('resume-field').style.display='none';
+      
+      console.log('Edit mode - set edit-id to:',editId);
       showTab('add',true);
     }
     async function deleteCurrent(){
+      if(!currentId){alert('No job selected');return;}
       if(!confirm('Delete this job?'))return;
+      const deleteId=currentId; // Save ID before closing modal
       try{
-        const r=await fetch(B+'/api/jobs/'+currentId,{method:'DELETE',headers:{Authorization:'Bearer '+T}});
+        const r=await fetch(B+'/api/jobs/'+deleteId,{method:'DELETE',headers:{Authorization:'Bearer '+T}});
         const d=await r.json();
         if(d.success){
           closeModal();
-          jobs=jobs.filter(j=>j.id!==currentId);
-          updateStats();
-          renderFilters();
-          renderJobs();
-        }else alert(d.error||'Failed')
-      }catch(e){alert('Error')}
+          // Remove job from local array (strict comparison to handle number/string)
+          jobs=jobs.filter(j=>String(j.id)!==String(deleteId));
+          // Reload jobs from server to ensure consistency
+          await loadJobs();
+        }else{
+          alert(d.error||'Failed to delete job');
+        }
+      }catch(e){
+        console.error('Delete error:',e);
+        alert('Error deleting job: '+e.message);
+      }
     }
     async function submitJob(e){
       e.preventDefault();
-      const id=document.getElementById('edit-id').value.trim();
-      const data={
-        position:document.getElementById('f-position').value,
-        company_name:document.getElementById('f-company').value,
-        contact:document.getElementById('f-contact').value,
-        source:document.getElementById('f-source').value,
-        application_date:document.getElementById('f-date').value,
-        status:document.getElementById('f-status').value,
-        description:document.getElementById('f-desc').value,
-        notes:document.getElementById('f-notes').value
-      };
-      const isUpdate=id&&id!==''&&id!=='null'&&id!=='undefined';
-      console.log(isUpdate?'Updating job '+id:'Creating new job',{id,isUpdate});
-      if(isUpdate&&(!id||id==='null'||id==='undefined')){
-        console.error('Invalid job ID for update:',id);
-        alert('Error: Invalid job ID');
+      
+      // Get edit-id value - check multiple ways to ensure we get it
+      const idInput=document.getElementById('edit-id');
+      let id='';
+      if(idInput){
+        id=String(idInput.value||'').trim();
+      }
+      
+      // Also check if we can get it from the form data attribute
+      if(!id||id===''||id==='null'||id==='undefined'){
+        // Try to get from a data attribute if stored
+        const form=document.getElementById('job-form');
+        if(form&&form.dataset.editId){
+          id=String(form.dataset.editId).trim();
+        }
+      }
+      
+      // Check if this is an update (edit-id has a valid number)
+      // Also check button text as backup indicator
+      const submitBtnText=document.getElementById('submit-btn').textContent.toLowerCase();
+      const isUpdate=(id&&id!==''&&id!=='null'&&id!=='undefined'&&!isNaN(parseInt(id)))||submitBtnText.includes('update');
+      
+      console.log('Submit job - isUpdate:',isUpdate,'id:',id,'button text:',submitBtnText,'idInput value:',idInput?idInput.value:'no input');
+      
+      // Validate that if it's an update, we have a valid ID
+      if(isUpdate&&(!id||id===''||id==='null'||id==='undefined'||isNaN(parseInt(id)))){
+        console.error('Update detected but invalid ID:',id);
+        alert('Error: Invalid job ID. Please try editing the job again.');
         return;
       }
+      
+      // Validate resume (required for new jobs, optional for updates)
+      const resumeFile=document.getElementById('f-resume').files[0];
+      const resumeFieldVisible=document.getElementById('resume-field').style.display!=='none';
+      
+      // Only require resume if it's a new job AND the resume field is visible
+      if(!isUpdate&&resumeFieldVisible&&!resumeFile){
+        alert('Resume is required for new job applications');
+        return;
+      }
+      
+      // For updates, resume is optional - if no file selected, that's fine
+      
+      // Create FormData (like Flask multipart/form-data)
+      const formData=new FormData();
+      formData.append('position',document.getElementById('f-position').value);
+      formData.append('company_name',document.getElementById('f-company').value);
+      formData.append('contact',document.getElementById('f-contact').value);
+      formData.append('source',document.getElementById('f-source').value);
+      formData.append('application_date',document.getElementById('f-date').value);
+      formData.append('status',document.getElementById('f-status').value);
+      formData.append('description',document.getElementById('f-desc').value);
+      formData.append('notes',document.getElementById('f-notes').value);
+      
+      // Add resume file if provided (required for new, optional for update)
+      if(resumeFile){
+        formData.append('resume',resumeFile);
+      }
+      
       try{
-        const url=isUpdate?B+'/api/jobs/'+id:B+'/api/jobs';
-        const r=await fetch(url,{method:isUpdate?'PUT':'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+T},body:JSON.stringify(data)});
+        const url=isUpdate?B+'/api/jobs/'+parseInt(id):B+'/api/jobs';
+        const method=isUpdate?'PUT':'POST';
+        console.log('Submitting job:',method,url,'isUpdate:',isUpdate,'id:',id);
+        
+        const r=await fetch(url,{method:method,headers:{Authorization:'Bearer '+T},body:formData});
         const d=await r.json();
-        if(d.success){
-          if(isUpdate){
-            // Update existing job in local array
-            const jobId=parseInt(id);
-            const idx=jobs.findIndex(j=>j.id===jobId);
-            console.log('Found job at index:',idx,'for id:',jobId);
-            if(idx!==-1){
-              const oldJob=jobs[idx];
-              jobs[idx]={
-                id:jobId,
-                user_id:oldJob.user_id,
-                position:data.position,
-                company_name:data.company_name,
-                description:data.description,
-                contact:data.contact,
-                source:data.source,
-                application_date:data.application_date,
-                status:data.status,
-                notes:data.notes,
-                resume_url:oldJob.resume_url,
-                created_at:oldJob.created_at,
-                updated_at:new Date().toISOString().replace('T',' ').split('.')[0]
-              };
-              console.log('Updated job:',jobs[idx]);
-            }else{
-              console.error('Job not found in array! Reloading...');
-              await loadJobs();
-            }
-            updateStats();
-            renderFilters();
-            renderJobs();
-          }else{
-            // For new jobs, reload to get the ID from server
-            await loadJobs();
-          }
-          resetForm();
-          showTab('list');
-        }else alert(d.error||'Failed')
-      }catch(e){console.error(e);alert('Error')}
+        
+        if(!d.success){
+          alert(d.error||'Failed to save job');
+          return;
+        }
+        
+        // Reload jobs to get latest data
+        await loadJobs();
+        resetForm();
+        showTab('list');
+      }catch(e){
+        console.error('Submit error:',e);
+        alert('Error: '+e.message);
+      }
     }
     function resetForm(){
       document.getElementById('job-form').reset();
-      document.getElementById('edit-id').value='';
+      const idInput=document.getElementById('edit-id');
+      if(idInput){
+        idInput.value='';
+        idInput.removeAttribute('value');
+      }
+      // Clear form data attribute
+      const form=document.getElementById('job-form');
+      if(form){
+        delete form.dataset.editId;
+      }
       document.getElementById('f-date').valueAsDate=new Date();
       document.getElementById('submit-btn').textContent='Submit';
       document.getElementById('form-title').textContent='Add New Application';
+      document.getElementById('resume-status').style.display='none';
+      // Show resume field for new jobs (required)
+      document.getElementById('resume-field').style.display='block';
+    }
+    async function viewResume(){
+      if(!currentId){alert('No job selected');return;}
+      try{
+        const r=await fetch(B+'/api/jobs/'+currentId+'/resume',{headers:{Authorization:'Bearer '+T}});
+        if(!r.ok){
+          // Try to get error message
+          try{
+            const d=await r.json();
+            alert(d.error||'Failed to load resume');
+          }catch{
+            alert('Failed to load resume: '+r.status+' '+r.statusText);
+          }
+          return;
+        }
+        // Check if response is PDF
+        const contentType=r.headers.get('Content-Type');
+        if(!contentType||!contentType.includes('application/pdf')){
+          alert('Invalid response format');
+          return;
+        }
+        const blob=await r.blob();
+        if(blob.size===0){
+          alert('Resume file is empty');
+          return;
+        }
+        const url=URL.createObjectURL(blob);
+        // Open PDF in new tab for viewing (not download)
+        const newWindow=window.open(url,'_blank');
+        if(!newWindow){
+          alert('Please allow pop-ups to view the resume');
+          URL.revokeObjectURL(url);
+          return;
+        }
+        // Clean up after a delay to allow the tab to load
+        setTimeout(()=>URL.revokeObjectURL(url),5000);
+      }catch(e){
+        console.error('Resume view error:',e);
+        alert('Error loading resume: '+e.message);
+      }
     }
     function logout(){localStorage.removeItem('token');localStorage.removeItem('user');window.location.href=B+'/login'}
     function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
@@ -526,7 +680,7 @@ def json_response(data, status=200):
         json.dumps(data),
         status=status,
         headers=Object.fromEntries([
-            ["Content-Type", "application/json"],
+        ["Content-Type", "application/json"],
             ["Access-Control-Allow-Origin", "*"],
             ["Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS"],
             ["Access-Control-Allow-Headers", "Content-Type, Authorization"],
@@ -564,6 +718,20 @@ def verify_password(password, hashed):
 def generate_token():
     """Generate session token"""
     return secrets.token_hex(32)
+
+def generate_otp():
+    """Generate 6-digit OTP"""
+    return ''.join([str(secrets.randbelow(10)) for _ in range(6)])
+
+def is_email(contact):
+    """Check if contact is an email address"""
+    return '@' in contact and '.' in contact.split('@')[1]
+
+def is_phone(contact):
+    """Check if contact is a phone number"""
+    # Remove common phone number characters
+    digits = ''.join([c for c in contact if c.isdigit()])
+    return len(digits) >= 10
 
 def parse_path(url):
     """Extract path from URL"""
@@ -640,67 +808,144 @@ async def get_user_from_token(request):
     token = auth[7:]
     
     session = await db_first(
-        "SELECT s.user_id, u.username, u.name FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token = ?",
+        "SELECT s.user_id, u.email, u.phone, u.name FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token = ?",
         [token]
     )
     return session
 
-async def handle_register(request):
-    """POST /jobtracking/api/auth/register"""
+async def handle_request_otp(request):
+    """POST /jobtracking/api/auth/request-otp - Request OTP for login/register"""
     try:
         body = json.loads(await request.text())
-        username = (body.get("username") or "").strip()
-        password = body.get("password") or ""
-        name = (body.get("name") or "").strip()
-        email = (body.get("email") or "").strip()
+        contact = (body.get("contact") or "").strip()
+        is_register = body.get("is_register", False)
         
-        if not username or not password or not name:
-            return error("Username, password, and name are required")
-        if len(password) < 6:
-            return error("Password must be at least 6 characters")
+        if not contact:
+            return error("Email or phone number is required")
         
-        # Check existing user
-        existing = await db_first("SELECT id FROM users WHERE username = ?", [username])
-        if existing:
-            return error("Username already exists")
+        # Validate contact format
+        if not is_email(contact) and not is_phone(contact):
+            return error("Please enter a valid email address or phone number")
         
-        # Create user
-        password_hash = hash_password(password)
+        # Check if user exists (for login) or doesn't exist (for register)
+        if is_register:
+            # For registration, check if user already exists
+            if is_email(contact):
+                existing = await db_first("SELECT id FROM users WHERE email = ?", [contact])
+            else:
+                existing = await db_first("SELECT id FROM users WHERE phone = ?", [contact])
+            
+            if existing:
+                return error("An account with this email/phone already exists. Please login instead.")
+        else:
+            # For login, check if user exists
+            if is_email(contact):
+                existing = await db_first("SELECT id FROM users WHERE email = ?", [contact])
+            else:
+                existing = await db_first("SELECT id FROM users WHERE phone = ?", [contact])
+            
+            if not existing:
+                return error("No account found. Please register first.")
+        
+        # Generate OTP
+        otp = generate_otp()
+        expires_at = datetime.now().timestamp() + 600  # 10 minutes from now
+        
+        # Store OTP in database (create otp_codes table if needed)
+        # For now, we'll use a simple approach - store in sessions table temporarily
+        # In production, you'd want a separate otp_codes table
+        try:
+            await db_execute(
+                """CREATE TABLE IF NOT EXISTS otp_codes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    contact TEXT NOT NULL,
+                    otp TEXT NOT NULL,
+                    expires_at REAL NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )""",
+                []
+            )
+        except:
+            pass  # Table might already exist
+        
+        # Delete old OTPs for this contact
+        await db_execute("DELETE FROM otp_codes WHERE contact = ? OR expires_at < ?", [contact, datetime.now().timestamp()])
+        
+        # Insert new OTP
         await db_execute(
-            "INSERT INTO users (username, password_hash, name, email) VALUES (?, ?, ?, ?)",
-            [username, password_hash, name, email]
+            "INSERT INTO otp_codes (contact, otp, expires_at) VALUES (?, ?, ?)",
+            [contact, otp, expires_at]
         )
         
-        # Get new user
-        user = await db_first("SELECT id, username, name, email FROM users WHERE username = ?", [username])
-        
-        # Create session
-        token = generate_token()
-        await db_execute(
-            "INSERT INTO sessions (user_id, token) VALUES (?, ?)",
-            [user["id"], token]
-        )
-        
+        # In production, send OTP via email/SMS service
+        # For now, we'll return it in the response (for testing only)
+        # TODO: Integrate with email/SMS service
         return success({
-            "token": token,
-            "user": {"id": user["id"], "username": user["username"], "name": user["name"]}
+            "message": "OTP sent successfully",
+            "otp": otp  # Remove this in production - only for testing
         })
     except Exception as e:
         return error(str(e), 500)
 
-async def handle_login(request):
-    """POST /jobtracking/api/auth/login"""
+async def handle_verify_otp(request):
+    """POST /jobtracking/api/auth/verify-otp - Verify OTP and login/register"""
     try:
         body = json.loads(await request.text())
-        username = (body.get("username") or "").strip()
-        password = body.get("password") or ""
+        contact = (body.get("contact") or "").strip()
+        otp = (body.get("otp") or "").strip()
+        is_register = body.get("is_register", False)
+        name = (body.get("name") or "").strip() if is_register else ""
         
-        if not username or not password:
-            return error("Username and password required")
+        if not contact or not otp:
+            return error("Contact and OTP are required")
         
-        user = await db_first("SELECT id, username, name, password_hash FROM users WHERE username = ?", [username])
-        if not user or not verify_password(password, user["password_hash"]):
-            return error("Invalid username or password", 401)
+        if len(otp) != 6:
+            return error("OTP must be 6 digits")
+        
+        # Verify OTP
+        otp_record = await db_first(
+            "SELECT contact, otp, expires_at FROM otp_codes WHERE contact = ? AND otp = ? ORDER BY created_at DESC LIMIT 1",
+            [contact, otp]
+        )
+        
+        if not otp_record:
+            return error("Invalid OTP", 401)
+        
+        # Check if OTP expired
+        if otp_record["expires_at"] < datetime.now().timestamp():
+            await db_execute("DELETE FROM otp_codes WHERE contact = ? AND otp = ?", [contact, otp])
+            return error("OTP has expired. Please request a new one.", 401)
+        
+        # Delete used OTP
+        await db_execute("DELETE FROM otp_codes WHERE contact = ? AND otp = ?", [contact, otp])
+        
+        if is_register:
+            # Create new user
+            email = contact if is_email(contact) else None
+            phone = contact if is_phone(contact) else None
+            
+            if not name:
+                return error("Name is required for registration")
+            
+            await db_execute(
+                "INSERT INTO users (email, phone, name) VALUES (?, ?, ?)",
+                [email, phone, name]
+            )
+            
+            # Get new user
+            if email:
+                user = await db_first("SELECT id, email, phone, name FROM users WHERE email = ?", [email])
+            else:
+                user = await db_first("SELECT id, email, phone, name FROM users WHERE phone = ?", [phone])
+        else:
+            # Get existing user
+            if is_email(contact):
+                user = await db_first("SELECT id, email, phone, name FROM users WHERE email = ?", [contact])
+            else:
+                user = await db_first("SELECT id, email, phone, name FROM users WHERE phone = ?", [contact])
+        
+        if not user:
+            return error("User not found", 404)
         
         # Create session
         token = generate_token()
@@ -711,7 +956,12 @@ async def handle_login(request):
         
         return success({
             "token": token,
-            "user": {"id": user["id"], "username": user["username"], "name": user["name"]}
+            "user": {
+                "id": user["id"],
+                "name": user["name"],
+                "email": user.get("email"),
+                "phone": user.get("phone")
+            }
         })
     except Exception as e:
         return error(str(e), 500)
@@ -735,8 +985,10 @@ async def handle_list_jobs(request):
         return error("Unauthorized", 401)
     
     try:
+        # Get jobs without resume_data (to avoid loading large base64 strings in list)
+        # resume_data is only loaded when viewing individual resume
         jobs = await db_query(
-            "SELECT * FROM jobs WHERE user_id = ? ORDER BY application_date DESC",
+            "SELECT id, user_id, position, company_name, description, contact, source, application_date, status, notes, resume_url, created_at, updated_at FROM jobs WHERE user_id = ? ORDER BY application_date DESC",
             [user["user_id"]]
         )
         return success({"jobs": list(jobs)})
@@ -744,68 +996,152 @@ async def handle_list_jobs(request):
         return error(str(e), 500)
 
 async def handle_create_job(request):
-    """POST /jobtracking/api/jobs"""
+    """POST /jobtracking/api/jobs - Create job with resume (multipart/form-data)"""
     user = await get_user_from_token(request)
     if not user:
         return error("Unauthorized", 401)
     
     try:
-        body = json.loads(await request.text())
+        # Parse multipart form data (like Flask)
+        form_data = await request.formData()
         
+        # Get job data from form
+        position = form_data.get("position") or ""
+        company_name = form_data.get("company_name") or ""
+        source = form_data.get("source") or ""
+        application_date = form_data.get("application_date") or ""
+        status = form_data.get("status") or ""
+        description = form_data.get("description") or ""
+        contact = form_data.get("contact") or ""
+        notes = form_data.get("notes") or ""
+        
+        # Validate required fields
         required = ["position", "company_name", "source", "application_date", "status"]
         for field in required:
-            if not body.get(field):
+            if not locals().get(field):
                 return error(f"{field} is required")
         
+        # Get resume file (required for new jobs)
+        resume_file = form_data.get("resume")
+        if not resume_file:
+            return error("Resume is required for new job applications")
+        
+        # Validate file type (PDF only)
+        if resume_file.type != "application/pdf":
+            return error("Only PDF files are allowed")
+        
+        # Check file size (limit to 5MB)
+        if resume_file.size > 5 * 1024 * 1024:
+            return error("File too large. Maximum size is 5MB", 400)
+        
+        # Read and encode resume to base64
+        file_content = await resume_file.arrayBuffer()
+        from js import Uint8Array
+        uint8_array = Uint8Array.new(file_content)
+        file_bytes = bytes(uint8_array.to_py())
+        import base64
+        resume_base64 = base64.b64encode(file_bytes).decode('utf-8')
+        
+        # Create job with resume
         await db_execute(
-            """INSERT INTO jobs (user_id, position, company_name, description, contact, source, application_date, status, notes)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            """INSERT INTO jobs (user_id, position, company_name, description, contact, source, application_date, status, notes, resume_data, resume_url)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             [
                 user["user_id"],
-                body.get("position"),
-                body.get("company_name"),
-                body.get("description", ""),
-                body.get("contact", ""),
-                body.get("source"),
-                body.get("application_date"),
-                body.get("status"),
-                body.get("notes", "")
+                position,
+                company_name,
+                description,
+                contact,
+                source,
+                application_date,
+                status,
+                notes,
+                resume_base64,
+                f"/jobtracking/api/jobs/{0}/resume"  # Will be updated after insert
             ]
         )
         
-        return success({"message": "Job created"})
+        # Get the new job ID to update resume_url
+        new_job = await db_first("SELECT id FROM jobs WHERE user_id = ? ORDER BY id DESC LIMIT 1", [user["user_id"]])
+        if new_job:
+            resume_url = f"/jobtracking/api/jobs/{new_job['id']}/resume"
+            await db_execute(
+                "UPDATE jobs SET resume_url = ? WHERE id = ?",
+                [resume_url, new_job["id"]]
+            )
+        
+        return success({"message": "Job created", "job_id": new_job["id"] if new_job else None})
     except Exception as e:
         return error(str(e), 500)
 
 async def handle_update_job(request, job_id):
-    """PUT /jobtracking/api/jobs/:id"""
+    """PUT /jobtracking/api/jobs/:id - Update job, optionally with new resume (multipart/form-data)"""
     user = await get_user_from_token(request)
     if not user:
         return error("Unauthorized", 401)
     
     try:
         # Verify ownership
-        job = await db_first("SELECT id FROM jobs WHERE id = ? AND user_id = ?", [job_id, user["user_id"]])
+        job = await db_first("SELECT id, resume_data FROM jobs WHERE id = ? AND user_id = ?", [job_id, user["user_id"]])
         if not job:
             return error("Job not found", 404)
         
-        body = json.loads(await request.text())
+        # Parse multipart form data (like Flask)
+        form_data = await request.formData()
         
+        # Get job data from form
+        position = form_data.get("position") or ""
+        company_name = form_data.get("company_name") or ""
+        source = form_data.get("source") or ""
+        application_date = form_data.get("application_date") or ""
+        status = form_data.get("status") or ""
+        description = form_data.get("description") or ""
+        contact = form_data.get("contact") or ""
+        notes = form_data.get("notes") or ""
+        
+        # Validate required fields
+        required = ["position", "company_name", "source", "application_date", "status"]
+        for field in required:
+            if not locals().get(field):
+                return error(f"{field} is required")
+        
+        # Get resume file (optional for updates - preserve existing if not provided)
+        resume_file = form_data.get("resume")
+        resume_base64 = job.get("resume_data")  # Keep existing resume by default
+        
+        if resume_file:
+            # New resume provided - validate and encode
+            if resume_file.type != "application/pdf":
+                return error("Only PDF files are allowed")
+            
+            if resume_file.size > 5 * 1024 * 1024:
+                return error("File too large. Maximum size is 5MB", 400)
+            
+            # Read and encode new resume to base64
+            file_content = await resume_file.arrayBuffer()
+            from js import Uint8Array
+            uint8_array = Uint8Array.new(file_content)
+            file_bytes = bytes(uint8_array.to_py())
+            import base64
+            resume_base64 = base64.b64encode(file_bytes).decode('utf-8')
+        
+        # Update job (preserve existing resume if new one not provided)
         await db_execute(
             """UPDATE jobs SET 
                position = ?, company_name = ?, description = ?, contact = ?, 
                source = ?, application_date = ?, status = ?, notes = ?,
-               updated_at = datetime('now')
+               resume_data = ?, updated_at = datetime('now')
                WHERE id = ? AND user_id = ?""",
             [
-                body.get("position"),
-                body.get("company_name"),
-                body.get("description", ""),
-                body.get("contact", ""),
-                body.get("source"),
-                body.get("application_date"),
-                body.get("status"),
-                body.get("notes", ""),
+                position,
+                company_name,
+                description,
+                contact,
+                source,
+                application_date,
+                status,
+                notes,
+                resume_base64,  # New resume or existing one
                 job_id,
                 user["user_id"]
             ]
@@ -855,6 +1191,106 @@ async def handle_job_stats(request):
         return error(str(e), 500)
 
 # ============================================================================
+# RESUME HANDLERS
+# ============================================================================
+
+async def handle_upload_resume(request, job_id):
+    """POST /jobtracking/api/jobs/:id/resume - Store resume as base64 in D1 database"""
+    user = await get_user_from_token(request)
+    if not user:
+        return error("Unauthorized", 401)
+    
+    try:
+        # Verify ownership
+        job = await db_first("SELECT id FROM jobs WHERE id = ? AND user_id = ?", [job_id, user["user_id"]])
+        if not job:
+            return error("Job not found", 404)
+        
+        # Parse multipart form data
+        form_data = await request.formData()
+        file = form_data.get("resume")
+        
+        if not file:
+            return error("No file provided", 400)
+        
+        # Validate file type (PDF only)
+        if file.type != "application/pdf":
+            return error("Only PDF files are allowed", 400)
+        
+        # Check file size (limit to 5MB to avoid database size issues)
+        file_size = file.size
+        if file_size > 5 * 1024 * 1024:  # 5MB
+            return error("File too large. Maximum size is 5MB", 400)
+        
+        # Read file content
+        file_content = await file.arrayBuffer()
+        # Convert ArrayBuffer to bytes
+        from js import Uint8Array
+        uint8_array = Uint8Array.new(file_content)
+        file_bytes = bytes(uint8_array.to_py())
+        
+        # Encode to base64
+        import base64
+        resume_base64 = base64.b64encode(file_bytes).decode('utf-8')
+        
+        # Update job with base64-encoded resume data
+        # Also set resume_url for backward compatibility (indicates resume exists)
+        resume_url = f"/jobtracking/api/jobs/{job_id}/resume"
+        await db_execute(
+            "UPDATE jobs SET resume_data = ?, resume_url = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?",
+            [resume_base64, resume_url, job_id, user["user_id"]]
+        )
+        
+        return success({"message": "Resume uploaded", "resume_url": resume_url})
+    except Exception as e:
+        return error(str(e), 500)
+
+async def handle_view_resume(request, job_id):
+    """GET /jobtracking/api/jobs/:id/resume - Retrieve and serve resume from D1 database"""
+    user = await get_user_from_token(request)
+    if not user:
+        return error("Unauthorized", 401)
+    
+    try:
+        # Verify ownership and get resume data
+        job = await db_first("SELECT resume_data, position, company_name FROM jobs WHERE id = ? AND user_id = ?", [job_id, user["user_id"]])
+        if not job:
+            return error("Job not found", 404)
+        
+        if not job.get("resume_data"):
+            return error("No resume uploaded for this job", 404)
+        
+        # Decode base64 to bytes
+        import base64
+        resume_base64 = job["resume_data"]
+        file_bytes = base64.b64decode(resume_base64)
+        
+        # Convert Python bytes to JavaScript Uint8Array for Cloudflare Workers
+        from js import Uint8Array
+        # Create Uint8Array from Python bytes more efficiently
+        uint8_list = list(file_bytes)
+        uint8_array = Uint8Array.new(uint8_list)
+        
+        # Generate filename from job details
+        position = job.get("position", "resume").replace(" ", "_")
+        company = job.get("company_name", "job").replace(" ", "_")
+        filename = f"{position}_{company}_resume.pdf"
+        
+        # Return PDF response with proper binary format
+        return Response.new(
+            uint8_array.buffer,
+            status=200,
+            headers=Object.fromEntries([
+                ["Content-Type", "application/pdf"],
+                ["Content-Disposition", f'inline; filename="{filename}"'],
+                ["Access-Control-Allow-Origin", "*"],
+                ["Cache-Control", "no-cache"],
+            ])
+        )
+    except Exception as e:
+        return error(str(e), 500)
+
+# ============================================================================
 # MAIN ENTRY POINT
 # ============================================================================
 
@@ -891,11 +1327,11 @@ async def on_fetch(request, env):
     
     # ========== AUTH API ==========
     
-    if path == "/jobtracking/api/auth/register" and method == "POST":
-        return await handle_register(request)
+    if path == "/jobtracking/api/auth/request-otp" and method == "POST":
+        return await handle_request_otp(request)
     
-    if path == "/jobtracking/api/auth/login" and method == "POST":
-        return await handle_login(request)
+    if path == "/jobtracking/api/auth/verify-otp" and method == "POST":
+        return await handle_verify_otp(request)
     
     if path == "/jobtracking/api/auth/logout" and method == "POST":
         return await handle_logout(request)
@@ -912,6 +1348,17 @@ async def on_fetch(request, env):
             return await handle_list_jobs(request)
         if method == "POST":
             return await handle_create_job(request)
+    
+    # Resume operations (check before single job operations)
+    if path.endswith("/resume"):
+        # Extract job ID from path like /jobtracking/api/jobs/123/resume
+        resume_path = path.replace("/resume", "")
+        resume_job_id = get_path_param(resume_path, "/jobtracking/api/jobs")
+        if resume_job_id:
+            if method == "POST":
+                return await handle_upload_resume(request, resume_job_id)
+            if method == "GET":
+                return await handle_view_resume(request, resume_job_id)
     
     # Single job operations with ID
     job_id = get_path_param(path, "/jobtracking/api/jobs")
