@@ -782,63 +782,92 @@ def is_email(email):
     """Check if email is valid"""
     return '@' in email and '.' in email.split('@')[1] and len(email.split('@')[0]) > 0
 
+# async def send_email(env, to_email, subject, html_content):
+#     """Send email using Resend API"""
+#     try:
+#         # Access secret from env (Cloudflare Workers Python)
+#         # In Cloudflare Workers Python, secrets are accessed directly
+#         api_key = env.RESEND_API_KEY
+        
+#         if not api_key:
+#             error_msg = "[ERROR] RESEND_API_KEY is empty or not found"
+#             print(error_msg)
+#             raise Exception(error_msg)
+        
+#         # Use Resend API
+#         from js import fetch, Object
+        
+#         # Prepare email data
+#         email_data = {
+#             "from": "Job Tracker <noreply@smrutishah.com>",  # Using verified domain
+#             "to": [to_email],
+#             "subject": subject,
+#             "html": html_content
+#         }
+        
+#         # Create Authorization header
+#         headers = {
+#             "Authorization": f"Bearer {api_key}",
+#             "Content-Type": "application/json",
+#         }
+
+#         response = await fetch(
+#             "https://api.resend.com/emails",
+#             {
+#                 "method": "POST",
+#                 "headers": headers,
+#                 "body": json.dumps(email_data),
+#             }
+#         )
+        
+#         # Check response
+#         if 200 <= response.status < 300:
+#             return True
+#         else:
+#             error_text = await response.text()
+#             print(f"Email send failed: {response.status} - {error_text}")
+#             return False
+#     except AttributeError as e:
+#         error_msg = f"[ERROR] RESEND_API_KEY not accessible: {str(e)}"
+#         print(error_msg)
+#         raise Exception(error_msg)
+#     except Exception as e:
+#         error_msg = str(e)
+#         print(f"Email send error: {error_msg}")
+#         raise Exception(f"Failed to send email: {error_msg}")
+
 async def send_email(env, to_email, subject, html_content):
-    """Send email using Resend API"""
-    try:
-        # Access secret from env (Cloudflare Workers Python)
-        # In Cloudflare Workers Python, secrets are accessed directly
-        api_key = env.RESEND_API_KEY
-        
-        if not api_key:
-            error_msg = "[ERROR] RESEND_API_KEY is empty or not found"
-            print(error_msg)
-            raise Exception(error_msg)
-        
-        # Use Resend API
-        from js import fetch, Object
-        
-        # Prepare email data
-        email_data = {
-            "from": "Job Tracker <noreply@smrutishah.com>",  # Using verified domain
-            "to": [to_email],
-            "subject": subject,
-            "html": html_content
-        }
-        
-        # Create Authorization header
-        auth_header = f"Bearer {api_key}"
-        
-        # Create headers - use Object.fromEntries for Cloudflare Workers
-        headers = Object.fromEntries([
-            ["Authorization", auth_header],
-            ["Content-Type", "application/json"]
-        ])
-        
-        # Make the API call
-        response = await fetch(
-            "https://api.resend.com/emails",
-            {
-                "method": "POST",
-                "headers": headers,
-                "body": json.dumps(email_data)
-            }
-        )
-        
-        # Check response
-        if response.status == 200:
-            return True
-        else:
-            error_text = await response.text()
-            print(f"Email send failed: {response.status} - {error_text}")
-            return False
-    except AttributeError as e:
-        error_msg = f"[ERROR] RESEND_API_KEY not accessible: {str(e)}"
-        print(error_msg)
-        raise Exception(error_msg)
-    except Exception as e:
-        error_msg = str(e)
-        print(f"Email send error: {error_msg}")
-        raise Exception(f"Failed to send email: {error_msg}")
+    from js import fetch, Object
+    import json
+
+    # Read secret
+    api_key = getattr(env, "RESEND_API_KEY", None)
+    if not api_key:
+        raise Exception("RESEND_API_KEY is missing in this Worker environment")
+
+    email_data = {
+        "from": "Job Tracker <noreply@smrutishah.com>",
+        "to": [to_email],
+        "subject": subject,
+        "html": html_content,
+    }
+
+    headers = Object.fromEntries([
+        ["Authorization", f"Bearer {api_key}"],
+        ["Content-Type", "application/json"],
+    ])
+
+    opts = Object.fromEntries([
+        ["method", "POST"],
+        ["headers", headers],
+        ["body", json.dumps(email_data)],
+    ])
+
+    res = await fetch("https://api.resend.com/emails", opts)
+    text = await res.text()
+    print("Resend response:", res.status, text)
+
+    return 200 <= res.status < 300
 
 def parse_path(url):
     """Extract path from URL"""

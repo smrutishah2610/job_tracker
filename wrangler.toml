@@ -14,12 +14,8 @@ database_id = "b5469c73-d127-4ca9-9686-90e0997a18df"  # Get this from: wrangler 
 
 [vars]
 # App configuration
-APP_SECRET = "change-this-to-a-secure-random-string"
+APP_SECRET = "re_fmF2hgy9_JNp85323QuxDa2SEw4koWsKG"
 BASE_PATH = "/jobtracking"
-
-# Note: RESEND_API_KEY should be set as a secret, not in vars
-# Run: wrangler secret put RESEND_API_KEY
-# Then paste: re_fmF2hgy9_JNp85323QuxDa2SEw4koWsKG
 
 # ============================================================================
 # DEPLOYMENT INSTRUCTIONS
