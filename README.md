@@ -74,10 +74,16 @@ wrangler d1 execute jobtracker_db --file=./migrations/0001_init.sql
 # 5. Add resume_data column (for base64 storage)
 wrangler d1 execute jobtracker_db --file=./migrations/0002_add_resume_data.sql
 
-# 6. Test locally
+# 6. Upgrade users schema for email/name auth fields
+wrangler d1 execute jobtracker_db --file=./migrations/0003_users_email_name.sql
+
+# 7. Add jobs.location column
+wrangler d1 execute jobtracker_db --file=./migrations/0004_add_location_to_jobs.sql
+
+# 8. Test locally
 wrangler dev
 
-# 7. Deploy
+# 9. Deploy
 wrangler deploy
 ```
 

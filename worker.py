@@ -270,14 +270,18 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    :root{--bg:#0a0a0f;--card:rgba(255,255,255,0.02);--border:rgba(255,255,255,0.06);--text:#fff;--muted:rgba(255,255,255,0.4);--accent:#6366f1}
+    :root{--bg:#0a0a0f;--nav-bg:rgba(10,10,15,0.8);--card:rgba(255,255,255,0.02);--card-hover:rgba(255,255,255,0.04);--border:rgba(255,255,255,0.06);--text:#fff;--muted:rgba(255,255,255,0.4);--tab-text:rgba(255,255,255,0.7);--filter-text:rgba(255,255,255,0.6);--accent:#6366f1}
+    body[data-theme='light']{--bg:#f5f7fb;--nav-bg:rgba(245,247,251,0.88);--card:#ffffff;--card-hover:#f3f5ff;--border:rgba(15,23,42,0.12);--text:#111827;--muted:rgba(17,24,39,0.62);--tab-text:rgba(17,24,39,0.8);--filter-text:rgba(17,24,39,0.75)}
     body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
-    .nav{background:rgba(10,10,15,0.8);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:16px 0;position:sticky;top:0;z-index:1000}
+    .nav{background:var(--nav-bg);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:16px 0;position:sticky;top:0;z-index:1000}
     .nav-inner{max-width:1400px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;align-items:center}
     .brand{display:flex;align-items:center;gap:12px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.4rem;color:var(--text);text-decoration:none}
     .brand-icon{width:40px;height:40px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:12px;display:flex;align-items:center;justify-content:center}
     .brand-icon svg{width:22px;height:22px;fill:#fff}
     .user-area{display:flex;align-items:center;gap:16px}
+    .theme-toggle{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);padding:5px;border-radius:12px}
+    .theme-btn{border:none;background:transparent;color:var(--tab-text);padding:8px 12px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer}
+    .theme-btn.active{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff}
     .user-badge{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);padding:8px 18px;border-radius:50px;font-weight:500}
     .avatar{width:32px;height:32px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px}
     .logout-btn{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:#f87171;padding:10px 22px;border-radius:10px;font-weight:600;cursor:pointer;transition:all 0.25s}
@@ -287,16 +291,28 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     .page-header h1{font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:700;margin-bottom:12px}
     .page-header p{color:var(--muted);font-size:16px}
     .tabs{display:flex;gap:12px;justify-content:center;margin-bottom:32px}
-    .tab{padding:12px 28px;background:var(--card);border:1px solid var(--border);border-radius:12px;color:rgba(255,255,255,0.7);font-weight:600;cursor:pointer;transition:all 0.25s}
+    .tab{padding:12px 28px;background:var(--card);border:1px solid var(--border);border-radius:12px;color:var(--tab-text);font-weight:600;cursor:pointer;transition:all 0.25s}
     .tab.active{background:linear-gradient(135deg,#6366f1,#8b5cf6);border-color:transparent;color:#fff}
     .filters{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:24px}
-    .filter{background:var(--card);border:1px solid var(--border);color:rgba(255,255,255,0.6);padding:10px 18px;border-radius:50px;font-weight:500;font-size:14px;cursor:pointer;transition:all 0.25s;display:flex;align-items:center;gap:8px}
-    .filter:hover{background:rgba(255,255,255,0.05);color:var(--text)}
+    .filter{background:var(--card);border:1px solid var(--border);color:var(--filter-text);padding:10px 18px;border-radius:50px;font-weight:500;font-size:14px;cursor:pointer;transition:all 0.25s;display:flex;align-items:center;gap:8px}
+    .filter:hover{background:var(--card-hover);color:var(--text)}
     .filter.active{background:linear-gradient(135deg,#6366f1,#8b5cf6);border-color:transparent;color:#fff}
     .filter .cnt{background:rgba(255,255,255,0.15);padding:2px 8px;border-radius:20px;font-size:12px}
+    .date-filter-wrap{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+    .date-filter-wrap label{font-size:13px;font-weight:700;color:var(--muted)}
+    .date-filter-select{min-width:180px;padding:10px 36px 10px 12px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;appearance:none;background-image:url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23888' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e\");background-repeat:no-repeat;background-position:right 12px center;background-size:14px 10px}
+    .date-filter-select:focus{outline:none;border-color:var(--accent)}
+    .search-wrap{margin-bottom:20px}
+    .search-field{position:relative}
+    .search-input{width:100%;padding:12px 42px 12px 42px;background:var(--card);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px}
+    .search-input:focus{outline:none;border-color:var(--accent);background:rgba(99,102,241,0.05)}
+    .search-btn{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:28px;height:28px;border:none;background:transparent;color:var(--muted);padding:0;font-size:24px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .search-btn:hover{color:var(--text)}
+    .search-clear{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:22px;height:22px;border:none;background:transparent;color:var(--muted);padding:0;display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;cursor:pointer;border-radius:50%}
+    .search-clear:hover{background:var(--card-hover);color:var(--text)}
     .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:20px}
     .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;cursor:pointer;transition:all 0.25s}
-    .card:hover{background:rgba(255,255,255,0.04);border-color:rgba(99,102,241,0.3);transform:translateY(-2px)}
+    .card:hover{background:var(--card-hover);border-color:rgba(99,102,241,0.3);transform:translateY(-2px)}
     .card-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
     .card-title{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:600;margin-bottom:4px}
     .card-company{color:rgba(255,255,255,0.7);font-size:14px}
@@ -350,6 +366,17 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     .btn-delete{background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);padding:10px 20px;border-radius:10px;font-weight:600;cursor:pointer}
     footer{text-align:center;padding:24px;border-top:1px solid var(--border);color:var(--muted);font-size:14px;margin-top:60px}
     .hidden{display:none!important}
+    body[data-theme='light'] .field label,
+    body[data-theme='light'] .btn-secondary,
+    body[data-theme='light'] .card-company,
+    body[data-theme='light'] .detail-value{color:rgba(17,24,39,0.8)}
+    body[data-theme='light'] .modal-box{background:#ffffff}
+    body[data-theme='light'] .field select option{background:#ffffff;color:#111827}
+    body[data-theme='light'] .modal-bg{background:rgba(15,23,42,0.28)}
+    body[data-theme='light'] .search-input:focus,
+    body[data-theme='light'] .field input:focus,
+    body[data-theme='light'] .field select:focus,
+    body[data-theme='light'] .field textarea:focus{background:rgba(99,102,241,0.08)}
   </style>
 </head>
 <body>
@@ -360,6 +387,10 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         Job Tracker
       </a>
       <div class="user-area">
+        <div class="theme-toggle">
+          <button type="button" id="theme-light" class="theme-btn" onclick="setTheme('light')">Light</button>
+          <button type="button" id="theme-dark" class="theme-btn" onclick="setTheme('dark')">Dark</button>
+        </div>
         <div class="user-badge"><span class="avatar" id="avatar">S</span><span id="uname">User</span></div>
         <button class="logout-btn" onclick="logout()">Logout</button>
       </div>
@@ -373,6 +404,24 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     </div>
     <div id="list-tab">
       <div class="filters" id="filters"></div>
+      <div class="date-filter-wrap">
+        <label for="date-filter">Date Filter</label>
+        <select id="date-filter" class="date-filter-select" onchange="setDateFilter(this.value)">
+          <option value="all_time">All Time</option>
+          <option value="today">Today</option>
+          <option value="yesterday">Yesterday</option>
+          <option value="week">Week</option>
+          <option value="month">Month</option>
+          <option value="year">Year</option>
+        </select>
+      </div>
+      <div class="search-wrap">
+        <div class="search-field">
+          <input id="search-input" class="search-input" type="text" placeholder="Search by position, company, location, source, or contact" onkeydown="handleSearchKey(event)" oninput="toggleClearButton()">
+          <button type="button" class="search-btn" onclick="applySearch()" aria-label="Search">⌕</button>
+          <button type="button" id="search-clear" class="search-clear hidden" onclick="clearSearch()" aria-label="Clear search">&times;</button>
+        </div>
+      </div>
       <div class="grid" id="jobs"></div>
       <div id="empty" class="empty hidden"><h3>No applications yet</h3><p>Start tracking by adding your first application</p><button class="btn-primary" onclick="showTab('add')">+ Add Application</button></div>
       </div>
@@ -385,6 +434,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             <h3>Job Information</h3>
             <div class="field"><label>Position *</label><input type="text" id="f-position" placeholder="e.g. Software Engineer" required></div>
             <div class="field"><label>Company *</label><input type="text" id="f-company" placeholder="e.g. Google" required></div>
+            <div class="field"><label>Location</label><input type="text" id="f-location" placeholder="e.g. Toronto, ON"></div>
             <div class="field"><label>Contact</label><input type="text" id="f-contact" placeholder="e.g. John Doe - Recruiter"></div>
             <div class="field"><label>Source *</label><input type="text" id="f-source" placeholder="e.g. LinkedIn" required></div>
             <div class="field"><label>Date Applied *</label><input type="date" id="f-date" required></div>
@@ -428,6 +478,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <div class="detail-grid">
           <div class="detail-item"><span class="detail-label">Status</span><span id="m-status" class="badge">Applied</span></div>
           <div class="detail-item"><span class="detail-label">Applied</span><span id="m-date" class="detail-value">-</span></div>
+          <div class="detail-item"><span class="detail-label">Location</span><span id="m-location" class="detail-value">-</span></div>
           <div class="detail-item"><span class="detail-label">Source</span><span id="m-source" class="detail-value">-</span></div>
           <div class="detail-item"><span class="detail-label">Contact</span><span id="m-contact" class="detail-value">-</span></div>
         </div>
@@ -448,10 +499,25 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <footer>© 2025 Job Tracker. Built by Smruti Shah</footer>
   <script>
     const B='/jobtracking',T=localStorage.getItem('token'),U=JSON.parse(localStorage.getItem('user')||'{}');
-    let jobs=[],stats={},filter='all',currentId=null;
+    const THEME_KEY='jobtracker_theme';
+    let jobs=[],stats={},filter='all',dateFilter='all_time',searchQuery='',currentId=null;
+    initTheme();
     if(!T){window.location.href=B+'/login'}else{document.getElementById('uname').textContent=U.name||'User';document.getElementById('avatar').textContent=(U.name||'U')[0].toUpperCase()}
     document.getElementById('f-date').valueAsDate=new Date();
     loadJobs();
+
+    function initTheme(){
+      const saved=localStorage.getItem(THEME_KEY);
+      const prefersDark=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setTheme(saved||(prefersDark?'dark':'light'),false);
+    }
+    function setTheme(theme,save=true){
+      const next=theme==='light'?'light':'dark';
+      document.body.setAttribute('data-theme',next);
+      document.getElementById('theme-light').classList.toggle('active',next==='light');
+      document.getElementById('theme-dark').classList.toggle('active',next==='dark');
+      if(save){localStorage.setItem(THEME_KEY,next);}
+    }
 
     function showTab(t,isEdit){
       const tabs=['list','add'];
@@ -468,7 +534,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           jobs=jd.jobs||[];
           updateStats();
         }
-        renderFilters();renderJobs();
+        renderFilters();syncDateFilterControl();renderJobs();
       }catch(e){console.error(e)}
     }
     function updateStats(){
@@ -483,8 +549,68 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       }).join('');
     }
     function setFilter(f){filter=f;renderFilters();renderJobs()}
+    function syncDateFilterControl(){
+      const control=document.getElementById('date-filter');
+      if(control&&control.value!==dateFilter)control.value=dateFilter;
+    }
+    function setDateFilter(v){dateFilter=v;syncDateFilterControl();renderJobs()}
+    function matchesDateFilter(d){
+      if(!d||dateFilter==='all_time')return true;
+      const today=new Date();
+      today.setHours(0,0,0,0);
+      const dateVal=new Date(d+'T00:00:00');
+      if(isNaN(dateVal.getTime()))return false;
+      if(dateFilter==='today'){
+        return dateVal.getTime()===today.getTime();
+      }
+      if(dateFilter==='yesterday'){
+        const y=new Date(today);
+        y.setDate(y.getDate()-1);
+        return dateVal.getTime()===y.getTime();
+      }
+      if(dateFilter==='week'){
+        const start=new Date(today);
+        start.setDate(start.getDate()-6);
+        return dateVal>=start&&dateVal<=today;
+      }
+      if(dateFilter==='month'){
+        return dateVal.getFullYear()===today.getFullYear()&&dateVal.getMonth()===today.getMonth();
+      }
+      if(dateFilter==='year'){
+        return dateVal.getFullYear()===today.getFullYear();
+      }
+      return true;
+    }
+    function applySearch(){
+      searchQuery=(document.getElementById('search-input').value||'').trim().toLowerCase();
+      toggleClearButton();
+      renderJobs();
+    }
+    function clearSearch(){
+      const input=document.getElementById('search-input');
+      input.value='';
+      searchQuery='';
+      toggleClearButton();
+      renderJobs();
+    }
+    function toggleClearButton(){
+      const q=(document.getElementById('search-input').value||'').trim();
+      document.getElementById('search-clear').classList.toggle('hidden',!q);
+    }
+    function handleSearchKey(e){
+      if(e.key==='Enter'){
+        e.preventDefault();
+        applySearch();
+      }
+    }
     function renderJobs(){
-      const f=filter==='all'?jobs:jobs.filter(j=>j.status===filter);
+      let f=filter==='all'?jobs:jobs.filter(j=>j.status===filter);
+      if(dateFilter!=='all_time'){
+        f=f.filter(j=>matchesDateFilter(j.application_date));
+      }
+      if(searchQuery){
+        f=f.filter(j=>(j.position||'').toLowerCase().includes(searchQuery)||(j.company_name||'').toLowerCase().includes(searchQuery)||(j.location||'').toLowerCase().includes(searchQuery)||(j.source||'').toLowerCase().includes(searchQuery)||(j.contact||'').toLowerCase().includes(searchQuery));
+      }
       if(!f.length){document.getElementById('jobs').innerHTML='';document.getElementById('empty').classList.remove('hidden');return}
       document.getElementById('empty').classList.add('hidden');
       document.getElementById('jobs').innerHTML=f.map(j=>{
@@ -504,6 +630,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       document.getElementById('m-status').textContent=j.status;
       document.getElementById('m-status').className='badge badge-'+badgeClass(j.status);
       document.getElementById('m-date').textContent=j.application_date;
+      document.getElementById('m-location').textContent=j.location||'-';
       document.getElementById('m-source').textContent=j.source;
       document.getElementById('m-contact').textContent=j.contact||'-';
       document.getElementById('m-desc-sec').classList.toggle('hidden',!j.description);
@@ -541,6 +668,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       // Populate form fields
       document.getElementById('f-position').value=j.position||'';
       document.getElementById('f-company').value=j.company_name||'';
+      document.getElementById('f-location').value=j.location||'';
       document.getElementById('f-contact').value=j.contact||'';
       document.getElementById('f-source').value=j.source||'';
       document.getElementById('f-date').value=j.application_date||'';
@@ -626,6 +754,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       const formData=new FormData();
       formData.append('position',document.getElementById('f-position').value);
       formData.append('company_name',document.getElementById('f-company').value);
+      formData.append('location',document.getElementById('f-location').value);
       formData.append('contact',document.getElementById('f-contact').value);
       formData.append('source',document.getElementById('f-source').value);
       formData.append('application_date',document.getElementById('f-date').value);
@@ -782,63 +911,92 @@ def is_email(email):
     """Check if email is valid"""
     return '@' in email and '.' in email.split('@')[1] and len(email.split('@')[0]) > 0
 
+# async def send_email(env, to_email, subject, html_content):
+#     """Send email using Resend API"""
+#     try:
+#         # Access secret from env (Cloudflare Workers Python)
+#         # In Cloudflare Workers Python, secrets are accessed directly
+#         api_key = env.RESEND_API_KEY
+        
+#         if not api_key:
+#             error_msg = "[ERROR] RESEND_API_KEY is empty or not found"
+#             print(error_msg)
+#             raise Exception(error_msg)
+        
+#         # Use Resend API
+#         from js import fetch, Object
+        
+#         # Prepare email data
+#         email_data = {
+#             "from": "Job Tracker <noreply@smrutishah.com>",  # Using verified domain
+#             "to": [to_email],
+#             "subject": subject,
+#             "html": html_content
+#         }
+        
+#         # Create Authorization header
+#         headers = {
+#             "Authorization": f"Bearer {api_key}",
+#             "Content-Type": "application/json",
+#         }
+
+#         response = await fetch(
+#             "https://api.resend.com/emails",
+#             {
+#                 "method": "POST",
+#                 "headers": headers,
+#                 "body": json.dumps(email_data),
+#             }
+#         )
+        
+#         # Check response
+#         if 200 <= response.status < 300:
+#             return True
+#         else:
+#             error_text = await response.text()
+#             print(f"Email send failed: {response.status} - {error_text}")
+#             return False
+#     except AttributeError as e:
+#         error_msg = f"[ERROR] RESEND_API_KEY not accessible: {str(e)}"
+#         print(error_msg)
+#         raise Exception(error_msg)
+#     except Exception as e:
+#         error_msg = str(e)
+#         print(f"Email send error: {error_msg}")
+#         raise Exception(f"Failed to send email: {error_msg}")
+
 async def send_email(env, to_email, subject, html_content):
-    """Send email using Resend API"""
-    try:
-        # Access secret from env (Cloudflare Workers Python)
-        # In Cloudflare Workers Python, secrets are accessed directly
-        api_key = env.RESEND_API_KEY
-        
-        if not api_key:
-            error_msg = "[ERROR] RESEND_API_KEY is empty or not found"
-            print(error_msg)
-            raise Exception(error_msg)
-        
-        # Use Resend API
-        from js import fetch, Object
-        
-        # Prepare email data
-        email_data = {
-            "from": "Job Tracker <noreply@smrutishah.com>",  # Using verified domain
-            "to": [to_email],
-            "subject": subject,
-            "html": html_content
-        }
-        
-        # Create Authorization header
-        auth_header = f"Bearer {api_key}"
-        
-        # Create headers - use Object.fromEntries for Cloudflare Workers
-        headers = Object.fromEntries([
-            ["Authorization", auth_header],
-            ["Content-Type", "application/json"]
-        ])
-        
-        # Make the API call
-        response = await fetch(
-            "https://api.resend.com/emails",
-            {
-                "method": "POST",
-                "headers": headers,
-                "body": json.dumps(email_data)
-            }
-        )
-        
-        # Check response
-        if response.status == 200:
-            return True
-        else:
-            error_text = await response.text()
-            print(f"Email send failed: {response.status} - {error_text}")
-            return False
-    except AttributeError as e:
-        error_msg = f"[ERROR] RESEND_API_KEY not accessible: {str(e)}"
-        print(error_msg)
-        raise Exception(error_msg)
-    except Exception as e:
-        error_msg = str(e)
-        print(f"Email send error: {error_msg}")
-        raise Exception(f"Failed to send email: {error_msg}")
+    from js import fetch, Object
+    import json
+
+    # Read secret
+    api_key = getattr(env, "RESEND_API_KEY", None)
+    if not api_key:
+        raise Exception("RESEND_API_KEY is missing in this Worker environment")
+
+    email_data = {
+        "from": "Job Tracker <noreply@smrutishah.com>",
+        "to": [to_email],
+        "subject": subject,
+        "html": html_content,
+    }
+
+    headers = Object.fromEntries([
+        ["Authorization", f"Bearer {api_key}"],
+        ["Content-Type", "application/json"],
+    ])
+
+    opts = Object.fromEntries([
+        ["method", "POST"],
+        ["headers", headers],
+        ["body", json.dumps(email_data)],
+    ])
+
+    res = await fetch("https://api.resend.com/emails", opts)
+    text = await res.text()
+    print("Resend response:", res.status, text)
+
+    return 200 <= res.status < 300
 
 def parse_path(url):
     """Extract path from URL"""
@@ -1220,7 +1378,7 @@ async def handle_list_jobs(request):
         # Get jobs without resume_data (to avoid loading large base64 strings in list)
         # resume_data is only loaded when viewing individual resume
         jobs = await db_query(
-            "SELECT id, user_id, position, company_name, description, contact, source, application_date, status, notes, resume_url, created_at, updated_at FROM jobs WHERE user_id = ? ORDER BY application_date DESC",
+            "SELECT id, user_id, position, company_name, location, description, contact, source, application_date, status, notes, resume_url, created_at, updated_at FROM jobs WHERE user_id = ? ORDER BY application_date DESC",
             [user["user_id"]]
         )
         return success({"jobs": list(jobs)})
@@ -1240,6 +1398,7 @@ async def handle_create_job(request):
         # Get job data from form
         position = form_data.get("position") or ""
         company_name = form_data.get("company_name") or ""
+        location = form_data.get("location") or ""
         source = form_data.get("source") or ""
         application_date = form_data.get("application_date") or ""
         status = form_data.get("status") or ""
@@ -1276,12 +1435,13 @@ async def handle_create_job(request):
         
         # Create job with resume
         await db_execute(
-            """INSERT INTO jobs (user_id, position, company_name, description, contact, source, application_date, status, notes, resume_data, resume_url)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            """INSERT INTO jobs (user_id, position, company_name, location, description, contact, source, application_date, status, notes, resume_data, resume_url)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             [
                 user["user_id"],
                 position,
                 company_name,
+                location,
                 description,
                 contact,
                 source,
@@ -1324,6 +1484,7 @@ async def handle_update_job(request, job_id):
         # Get job data from form
         position = form_data.get("position") or ""
         company_name = form_data.get("company_name") or ""
+        location = form_data.get("location") or ""
         source = form_data.get("source") or ""
         application_date = form_data.get("application_date") or ""
         status = form_data.get("status") or ""
@@ -1360,13 +1521,14 @@ async def handle_update_job(request, job_id):
         # Update job (preserve existing resume if new one not provided)
         await db_execute(
             """UPDATE jobs SET 
-               position = ?, company_name = ?, description = ?, contact = ?, 
+               position = ?, company_name = ?, location = ?, description = ?, contact = ?, 
                source = ?, application_date = ?, status = ?, notes = ?,
                resume_data = ?, updated_at = datetime('now')
                WHERE id = ? AND user_id = ?""",
             [
                 position,
                 company_name,
+                location,
                 description,
                 contact,
                 source,

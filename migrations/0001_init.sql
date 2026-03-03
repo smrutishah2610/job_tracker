@@ -4,10 +4,10 @@
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY,
-    username TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
+    username TEXT UNIQUE,
+    email TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
-    email TEXT,
+    password_hash TEXT NOT NULL,
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now'))
 );
@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     user_id INTEGER NOT NULL,
     position TEXT NOT NULL,
     company_name TEXT NOT NULL,
+    location TEXT,
     description TEXT,
     contact TEXT,
     source TEXT NOT NULL,
@@ -45,4 +46,4 @@ CREATE INDEX IF NOT EXISTS idx_jobs_user_id ON jobs(user_id);
 CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);
 CREATE INDEX IF NOT EXISTS idx_jobs_application_date ON jobs(application_date);
 CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
-CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
